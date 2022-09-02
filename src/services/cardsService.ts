@@ -6,6 +6,25 @@ import * as companyRepository from "../repositories/companyRepository";
 import * as employeeRepository from "../repositories/employeeRepository";
 import * as cardRepository from "../repositories/cardRepository";
 import * as cardsUtils from "../utils/cardsUtils";
+import * as rechargeRepository from "../repositories/rechargeRepository";
+import * as paymentRepository from "../repositories/paymentRepository";
+
+function calculateTotalAmount(array: any[]): number {
+    if(!array.length) return 0;
+
+    return array.reduce((prev, curr) => prev + curr.amount, 0);
+}
+
+function calculateBalance(transactions: paymentRepository.PaymentWithBusinessName[], recharges: rechargeRepository.Recharge[]): number {
+    const totalTransactions: number = calculateTotalAmount(transactions);
+    const totalRecharges: number = calculateTotalAmount(recharges);
+     
+    const balance = totalRecharges - totalTransactions;
+     
+    if(balance < 0) return 0;
+
+    return balance;
+} 
 
 export async function createCard(data: { employeeId: number, type: cardRepository.TransactionTypes }, apiKey: string | undefined) {
     if(!apiKey) {
@@ -93,3 +112,28 @@ export async function activateCard(cardInfo: { cardId: number, cvc: string, pass
     
     await cardRepository.update(cardId, cardUpdated);
 }
+
+export async function viewCardBalanceAndTransactions(cardId: number | undefined) {
+    if(!cardId) {
+        throw { code: "Error_Card_Id_Not_Sent", message: "Card id not sent" };
+    }
+
+    const card: cardRepository.Card | undefined = await cardRepository.findById(cardId);
+
+    if(!card) {
+        throw { code: "Error_Invalid_Card_Id", message: "Card id is invalid!" };
+    }
+
+    const transactions: paymentRepository.PaymentWithBusinessName[] = await paymentRepository.findByCardId(cardId); 
+    const recharges: rechargeRepository.Recharge[] = await rechargeRepository.findByCardId(cardId);
+
+    const balance: number = calculateBalance(transactions, recharges);
+
+    return { 
+        balance,
+        transactions,
+        recharges
+    }
+}
+
+

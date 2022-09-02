@@ -7,7 +7,8 @@ export default function errorHandlerMiddleware(error: any, req: Request, res: Re
     error.code === "Error_Invalid_Card_Id" || 
     error.code === "Error_Card_Is_Expired" ||
     error.code === "Error_Invalid_CVC" ||
-    error.code === "Error_Invalid_Password") {
+    error.code === "Error_Invalid_Password" ||
+    error.code === "Error_Card_Id_Not_Sent") {
         return res.status(401).send(error.message);
     }
 

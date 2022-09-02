@@ -18,3 +18,11 @@ export async function activateCard(req: Request, res: Response) {
         
     res.status(200).send("Card activated successfully!");
 }
+
+export async function viewCardBalanceAndTransactions(req: Request, res: Response) {
+    const cardId: number = parseInt(req.params.cardId);
+
+    const balance = await cardsService.viewCardBalanceAndTransactions(cardId);
+        
+    res.status(200).send(balance);
+}
