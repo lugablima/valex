@@ -1,5 +1,5 @@
-import { connection } from "../db/postgres.js";
-import { mapObjectToUpdateQuery } from "../utils/sqlUtils.js";
+import { connection } from "../db/postgres";
+// import { mapObjectToUpdateQuery } from "../utils/sqlUtils";
 
 export type TransactionTypes =
   | "groceries"
@@ -102,22 +102,22 @@ export async function insert(cardData: CardInsertData) {
   );
 }
 
-export async function update(id: number, cardData: CardUpdateData) {
-  const { objectColumns: cardColumns, objectValues: cardValues } =
-    mapObjectToUpdateQuery({
-      object: cardData,
-      offset: 2,
-    });
+// export async function update(id: number, cardData: CardUpdateData) {
+//   const { objectColumns: cardColumns, objectValues: cardValues } =
+//     mapObjectToUpdateQuery({
+//       object: cardData,
+//       offset: 2,
+//     });
 
-  connection.query(
-    `
-    UPDATE cards
-      SET ${cardColumns}
-    WHERE $1=id
-  `,
-    [id, ...cardValues]
-  );
-}
+//   connection.query(
+//     `
+//     UPDATE cards
+//       SET ${cardColumns}
+//     WHERE $1=id
+//   `,
+//     [id, ...cardValues]
+//   );
+// }
 
 export async function remove(id: number) {
   connection.query<any, [number]>("DELETE FROM cards WHERE id=$1", [id]);
