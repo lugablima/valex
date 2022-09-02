@@ -6,11 +6,7 @@ export async function createCard(req: Request, res: Response) {
     const apiKey = req.header("x-api-key");
     const data: { employeeId: number, type: cardRepository.TransactionTypes } = req.body;
 
-    try {
-        await cardsService.createCard(data, apiKey);
+    await cardsService.createCard(data, apiKey);
         
-        res.status(201).send("Foi!");
-    } catch (error: any) {
-        res.status(500).send(error.message);
-    }    
+    res.status(201).send("Card created successfully!");
 }
