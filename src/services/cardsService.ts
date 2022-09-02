@@ -24,7 +24,17 @@ function calculateBalance(transactions: paymentRepository.PaymentWithBusinessNam
     if(balance < 0) return 0;
 
     return balance;
-} 
+}
+
+async function checkIfTheCardExists(cardId: number) {
+    const card: cardRepository.Card | undefined = await cardRepository.findById(cardId);
+
+    if(!card) {
+        throw { code: "Error_Invalid_Card_Id", message: "Card id is invalid!" };
+    }
+
+    return card;
+}
 
 export async function createCard(data: { employeeId: number, type: cardRepository.TransactionTypes }, apiKey: string | undefined) {
     if(!apiKey) {
@@ -75,11 +85,7 @@ export async function createCard(data: { employeeId: number, type: cardRepositor
 export async function activateCard(cardInfo: { cardId: number, cvc: string, password: string }) {
     const { cardId, cvc, password } = cardInfo;
 
-    const card: cardRepository.Card | undefined = await cardRepository.findById(cardId);
-
-    if(!card) {
-        throw { code: "Error_Invalid_Card_Id", message: "Card id is invalid!" };
-    }
+    const card: cardRepository.Card = await checkIfTheCardExists(cardId);
 
     if(dayjs(dayjs().format("MM/YY")).isAfter(card.expirationDate)) {
         throw { code: "Error_Card_Is_Expired", message: "The card is expired!" };
@@ -118,11 +124,7 @@ export async function viewCardBalanceAndTransactions(cardId: number | undefined)
         throw { code: "Error_Card_Id_Not_Sent", message: "Card id not sent" };
     }
 
-    const card: cardRepository.Card | undefined = await cardRepository.findById(cardId);
-
-    if(!card) {
-        throw { code: "Error_Invalid_Card_Id", message: "Card id is invalid!" };
-    }
+    await checkIfTheCardExists(cardId);
 
     const transactions: paymentRepository.PaymentWithBusinessName[] = await paymentRepository.findByCardId(cardId); 
     const recharges: rechargeRepository.Recharge[] = await rechargeRepository.findByCardId(cardId);
