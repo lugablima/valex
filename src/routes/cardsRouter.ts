@@ -5,6 +5,7 @@ import * as cardsController from "../controllers/cardsController";
 
 const cardsRouter = Router();
 
-cardsRouter.post("/cards", validateSchema(cardsSchema.cardSchema) ,cardsController.createCard);
+cardsRouter.post("/cards", validateSchema(cardsSchema.card), cardsController.createCard);
+cardsRouter.put("/cards", validateSchema(cardsSchema.cardActivation), cardsController.activateCard);
 
 export default cardsRouter;

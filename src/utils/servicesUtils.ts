@@ -1,11 +1,15 @@
-export function validateIfTheEntityDoesNotExist(entity: any, code: string, message: string) {
+export function checkIfItDoesNotExist(entity: any, code: string, message: string) {
     if(!entity) {
         throw { code, message };
     }
+    return;
 }
 
-export function validateIfTheEntityExists(entity: any, code: string, message: string) {
+export function checkIfItExists(entity: any, code: string, message: string) {
+    console.log("cheguei no utils");
     if(entity) {
         throw { code, message };
     }
+    console.log("mas não aqui");
 }
+

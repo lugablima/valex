@@ -1,30 +1,11 @@
 import "../setup";
 import { faker } from '@faker-js/faker';
 import dayjs from "dayjs";
-import Cryptr from "cryptr";
+import bcrypt from "bcrypt";
 import * as companyRepository from "../repositories/companyRepository";
 import * as employeeRepository from "../repositories/employeeRepository";
 import * as cardRepository from "../repositories/cardRepository";
-
-function generateNameOnCard(fullName: string): string {
-    const arrayOfTheName: string[] = fullName.toUpperCase().split(" ");
-
-    if(arrayOfTheName.length === 1) return arrayOfTheName[0]; 
-
-    let nameOnCard: string = arrayOfTheName[0];
-
-    for(let i = 1; i < arrayOfTheName.length - 1; i++) {
-        const middleName: string = arrayOfTheName[i];  
-
-        if(middleName.length >= 3) {
-            nameOnCard += " " + middleName[0];
-        }
-    }
-
-    nameOnCard += " " + arrayOfTheName[arrayOfTheName.length - 1];
-
-    return nameOnCard;
-}
+import * as cardsUtils from "../utils/cardsUtils";
 
 export async function createCard(data: { employeeId: number, type: cardRepository.TransactionTypes }, apiKey: string | undefined) {
     if(!apiKey) {
@@ -50,15 +31,11 @@ export async function createCard(data: { employeeId: number, type: cardRepositor
     }
 
     const cardNumber: string = faker.finance.account(16);
-    const nameOnCard: string = generateNameOnCard(employee.fullName);
+    const nameOnCard: string = cardsUtils.generateNameOnCard(employee.fullName);
     const expirationDate: string = dayjs().add(5, "year").format("MM/YY");
     const cvc: string = faker.finance.creditCardCVV();
-
-    const cvcSecretKey: string = process.env.CVC_SECRET_KEY ? process.env.CVC_SECRET_KEY : "secret"; 
-
-    const cryptr: Cryptr = new Cryptr(cvcSecretKey);
-    const encryptedCvc: string = cryptr.encrypt(cvc);
-    // const decryptedCvc = cryptr.decrypt(encryptedCvc);
+    
+    const encryptedCvc: string = cardsUtils.encryptCvc(cvc);
     
     const card: cardRepository.CardInsertData = {
         number: cardNumber,
@@ -72,7 +49,47 @@ export async function createCard(data: { employeeId: number, type: cardRepositor
         isBlocked: true,
         type: data.type
     }
-    
+
     await cardRepository.insert(card);
 }
 
+export async function activateCard(cardInfo: { cardId: number, cvc: string, password: string }) {
+    const { cardId, cvc, password } = cardInfo;
+
+    const card: cardRepository.Card | undefined = await cardRepository.findById(cardId);
+
+    if(!card) {
+        throw { code: "Error_Invalid_Card_Id", message: "Card id is invalid!" };
+    }
+
+    if(dayjs(dayjs().format("MM/YY")).isAfter(card.expirationDate)) {
+        throw { code: "Error_Card_Is_Expired", message: "The card is expired!" };
+    }
+
+    if(card.password) {
+        throw { code: "Error_Card_Already_Activated", message: "The card is already activated!" };
+    }
+
+    const decryptedCvc: string = cardsUtils.decryptCvc(card.securityCode);
+
+    if(cvc !== decryptedCvc) {
+        throw { code: "Error_Invalid_CVC", message: "CVC is invalid!" };
+    }
+
+    const passwordRegex: RegExp = /^[0-9]{4}$/;
+
+    if(!passwordRegex.test(password)) {
+        throw { code: "Error_Invalid_Password", message: "The password must consist of 4 numbers!" };
+    }
+
+    const saltRounds: number = 10;
+    const cryptedPassword: string = bcrypt.hashSync(password, saltRounds);
+
+    const cardUpdated: cardRepository.CardUpdateData = {
+        password: cryptedPassword,
+        originalCardId: cardId,
+        isBlocked: false
+    };
+    
+    await cardRepository.update(cardId, cardUpdated);
+}
