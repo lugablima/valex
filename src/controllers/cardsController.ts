@@ -1,4 +1,4 @@
-import { Request, Response } from "express"
+import { Request, Response } from "express";
 import * as cardRepository from "../repositories/cardRepository";
 import * as cardsService from "../services/cardsService";
 

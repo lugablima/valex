@@ -20,7 +20,19 @@ function calculateBalance(transactions: paymentRepository.PaymentWithBusinessNam
     return balance;
 }
 
-async function checkIfTheCardExists(cardId: number) {
+export async function checkIfTheApiKeyIsValid(apiKey: string | undefined) {
+    if(!apiKey) {
+        throw { code: "Error_Api_Key_Not_Sent", message: "The api key was not sent" };
+    }
+    
+    const company: companyRepository.Company | undefined = await companyRepository.findByApiKey(apiKey); 
+
+    if(!company) {
+        throw { code: "Error_Invalid_Api_Key", message: "The api key is invalid" };
+    }
+}
+
+export async function checkIfTheCardExists(cardId: number) {
     const card: cardRepository.Card | undefined = await cardRepository.findById(cardId);
 
     if(!card) {
@@ -30,7 +42,7 @@ async function checkIfTheCardExists(cardId: number) {
     return card;
 }
 
-function checksThatTheCardIsNotExpired(card: cardRepository.Card) {
+export function checksThatTheCardIsNotExpired(card: cardRepository.Card) {
     if(dayjs(dayjs().format("MM/YY")).isAfter(card.expirationDate)) {
         throw { code: "Error_Card_Is_Expired", message: "The card is expired!" };
     }
@@ -57,15 +69,7 @@ function validatePassword(password: string, encryptedPassword: string | undefine
 }
 
 export async function createCard(data: { employeeId: number, type: cardRepository.TransactionTypes }, apiKey: string | undefined) {
-    if(!apiKey) {
-        throw { code: "Error_Api_Key_Not_Sent", message: "The api key was not sent" };
-    }
-    
-    const company: companyRepository.Company | undefined = await companyRepository.findByApiKey(apiKey); 
-
-    if(!company) {
-        throw { code: "Error_Invalid_Api_Key", message: "The api key is invalid" };
-    }
+    await checkIfTheApiKeyIsValid(apiKey);
 
     const employee: employeeRepository.Employee | undefined = await employeeRepository.findById(data.employeeId); 
 
