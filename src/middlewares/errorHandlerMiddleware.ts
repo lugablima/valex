@@ -10,7 +10,9 @@ export default function errorHandlerMiddleware(error: any, req: Request, res: Re
     error.code === "Error_Invalid_Password" ||
     error.code === "Error_Card_Id_Not_Sent" ||
     error.code === "Error_There_Is_No_Password" ||
-    error.code === "Error_Card_Is_Not_Activated") {
+    error.code === "Error_Card_Is_Not_Activated" ||
+    error.code === "Error_Invalid_Business" ||
+    error.code === "Error_Insufficient_Balance") {
         return res.status(401).send(error.message);
     }
 

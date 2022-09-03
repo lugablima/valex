@@ -9,15 +9,18 @@ import * as cardsUtils from "../utils/cardsUtils";
 import * as rechargeRepository from "../repositories/rechargeRepository";
 import * as paymentRepository from "../repositories/paymentRepository";
 
-function calculateBalance(transactions: paymentRepository.PaymentWithBusinessName[], recharges: rechargeRepository.Recharge[]): number {
+export async function calculateBalance(cardId: number) {
+    const transactions: paymentRepository.PaymentWithBusinessName[] = await paymentRepository.findByCardId(cardId); 
+    const recharges: rechargeRepository.Recharge[] = await rechargeRepository.findByCardId(cardId);
+    
     const totalTransactions: number = cardsUtils.calculateTotalAmount(transactions);
     const totalRecharges: number = cardsUtils.calculateTotalAmount(recharges);
      
-    const balance = totalRecharges - totalTransactions;
+    let balance = totalRecharges - totalTransactions;
      
-    if(balance < 0) return 0;
+    if(balance < 0) balance = 0;
 
-    return balance;
+    return { balance, transactions, recharges };
 }
 
 export async function checkIfTheApiKeyIsValid(apiKey: string | undefined) {
@@ -56,7 +59,7 @@ function checkPasswordFormat(password: string) {
     }
 }
 
-function validatePassword(password: string, encryptedPassword: string | undefined) {
+export function validatePassword(password: string, encryptedPassword: string | undefined) {
     checkPasswordFormat(password);
 
     if(!encryptedPassword) {
@@ -144,16 +147,13 @@ export async function viewCardBalanceAndTransactions(cardId: number | undefined)
 
     await checkIfTheCardExists(cardId);
 
-    const transactions: paymentRepository.PaymentWithBusinessName[] = await paymentRepository.findByCardId(cardId); 
-    const recharges: rechargeRepository.Recharge[] = await rechargeRepository.findByCardId(cardId);
+    const balance: { 
+        balance: number,
+        transactions: paymentRepository.PaymentWithBusinessName[],
+        recharges: rechargeRepository.Recharge[]
+    } = await calculateBalance(cardId);
 
-    const balance: number = calculateBalance(transactions, recharges);
-
-    return { 
-        balance,
-        transactions,
-        recharges
-    }
+    return balance;
 }
 
 export async function blockCard(cardInfos: { cardId: number, password: string }) {
