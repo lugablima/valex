@@ -13,7 +13,9 @@ export default function errorHandlerMiddleware(error: any, req: Request, res: Re
         return res.status(401).send(error.message);
     }
 
-    if(error.code === "Error_Card_Type_Conflict" || error.code === "Error_Card_Already_Activated" || error.code === "Error_Blocked_Card") {
+    if(error.code === "Error_Card_Type_Conflict" || 
+    error.code === "Error_Card_Already_Activated" || 
+    error.code === "Error_Blocked_Card" || error.code === "Error_Unlocked_Card") {
         return res.status(409).send(error.message);
     }
 

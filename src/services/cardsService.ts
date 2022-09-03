@@ -178,3 +178,22 @@ export async function blockCard(cardInfos: { cardId: number, password: string })
     await cardRepository.update(cardId, cardUpdated);
 }
 
+export async function unlockCard(cardInfos: { cardId: number, password: string }) {
+    const { cardId, password } = cardInfos;
+
+    const card: cardRepository.Card = await checkIfTheCardExists(cardId);
+
+    checksThatTheCardIsNotExpired(card);
+    
+    if(!card.isBlocked) {
+        throw { code: "Error_Unlocked_Card", message: "The card is already unlocked!" };
+    }
+
+    validatePassword(password, card.password);
+
+    const cardUpdated: cardRepository.CardUpdateData = {
+        isBlocked: false
+    };
+    
+    await cardRepository.update(cardId, cardUpdated);
+}

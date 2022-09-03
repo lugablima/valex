@@ -9,5 +9,6 @@ cardsRouter.post("/cards", validateSchema(cardsSchema.card), cardsController.cre
 cardsRouter.put("/cards", validateSchema(cardsSchema.cardActivation), cardsController.activateCard);
 cardsRouter.get("/balance/:cardId", cardsController.viewCardBalanceAndTransactions);
 cardsRouter.put("/block-card", validateSchema(cardsSchema.cardLock), cardsController.blockCard);
+cardsRouter.put("/unlock-card", validateSchema(cardsSchema.cardLock), cardsController.unlockCard);
 
 export default cardsRouter;
