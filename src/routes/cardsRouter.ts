@@ -8,5 +8,6 @@ const cardsRouter = Router();
 cardsRouter.post("/cards", validateSchema(cardsSchema.card), cardsController.createCard);
 cardsRouter.put("/cards", validateSchema(cardsSchema.cardActivation), cardsController.activateCard);
 cardsRouter.get("/balance/:cardId", cardsController.viewCardBalanceAndTransactions);
+cardsRouter.put("/block-card", validateSchema(cardsSchema.cardLock), cardsController.blockCard);
 
 export default cardsRouter;

@@ -10,3 +10,8 @@ export const cardActivation: Schema = joi.object({
     cvc: joi.string().trim().min(3).max(3).required(),
     password: joi.string().trim().required()
 }); 
+
+export const cardLock: Schema = joi.object({
+    cardId: joi.number().integer().positive().required(),
+    password: joi.string().trim().required()
+}); 

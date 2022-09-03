@@ -8,11 +8,12 @@ export default function errorHandlerMiddleware(error: any, req: Request, res: Re
     error.code === "Error_Card_Is_Expired" ||
     error.code === "Error_Invalid_CVC" ||
     error.code === "Error_Invalid_Password" ||
-    error.code === "Error_Card_Id_Not_Sent") {
+    error.code === "Error_Card_Id_Not_Sent" ||
+    error.code === "Error_There_Is_No_Password") {
         return res.status(401).send(error.message);
     }
 
-    if(error.code === "Error_Card_Type_Conflict" || error.code === "Error_Card_Already_Activated") {
+    if(error.code === "Error_Card_Type_Conflict" || error.code === "Error_Card_Already_Activated" || error.code === "Error_Blocked_Card") {
         return res.status(409).send(error.message);
     }
 

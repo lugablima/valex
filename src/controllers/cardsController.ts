@@ -26,3 +26,11 @@ export async function viewCardBalanceAndTransactions(req: Request, res: Response
         
     res.status(200).send(balance);
 }
+
+export async function blockCard(req: Request, res: Response) {
+    const cardInfos: { cardId: number, password: string } = req.body;
+
+    await cardsService.blockCard(cardInfos);
+        
+    res.status(200).send("Card blocked successfully!");
+}

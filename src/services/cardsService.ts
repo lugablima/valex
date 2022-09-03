@@ -36,6 +36,32 @@ async function checkIfTheCardExists(cardId: number) {
     return card;
 }
 
+function checksThatTheCardIsNotExpired(card: cardRepository.Card) {
+    if(dayjs(dayjs().format("MM/YY")).isAfter(card.expirationDate)) {
+        throw { code: "Error_Card_Is_Expired", message: "The card is expired!" };
+    }
+}
+
+function checkPasswordFormat(password: string) {
+    const passwordRegex: RegExp = /^[0-9]{4}$/;
+
+    if(!passwordRegex.test(password)) {
+        throw { code: "Error_Invalid_Password", message: "The password must consist of 4 numbers!" };
+    }
+}
+
+function validatePassword(password: string, encryptedPassword: string | undefined) {
+    checkPasswordFormat(password);
+
+    if(!encryptedPassword) {
+        throw { code: "Error_There_Is_No_Password", message: "There is no password registered for this card!" };
+    }
+
+    if(!bcrypt.compareSync(password, encryptedPassword)) {
+        throw { code: "Error_Invalid_Password", message: "The password is invalid!" };
+    }
+}
+
 export async function createCard(data: { employeeId: number, type: cardRepository.TransactionTypes }, apiKey: string | undefined) {
     if(!apiKey) {
         throw { code: "Error_Api_Key_Not_Sent", message: "The api key was not sent" };
@@ -87,9 +113,7 @@ export async function activateCard(cardInfo: { cardId: number, cvc: string, pass
 
     const card: cardRepository.Card = await checkIfTheCardExists(cardId);
 
-    if(dayjs(dayjs().format("MM/YY")).isAfter(card.expirationDate)) {
-        throw { code: "Error_Card_Is_Expired", message: "The card is expired!" };
-    }
+    checksThatTheCardIsNotExpired(card);
 
     if(card.password) {
         throw { code: "Error_Card_Already_Activated", message: "The card is already activated!" };
@@ -101,11 +125,7 @@ export async function activateCard(cardInfo: { cardId: number, cvc: string, pass
         throw { code: "Error_Invalid_CVC", message: "CVC is invalid!" };
     }
 
-    const passwordRegex: RegExp = /^[0-9]{4}$/;
-
-    if(!passwordRegex.test(password)) {
-        throw { code: "Error_Invalid_Password", message: "The password must consist of 4 numbers!" };
-    }
+    checkPasswordFormat(password);
 
     const saltRounds: number = 10;
     const cryptedPassword: string = bcrypt.hashSync(password, saltRounds);
@@ -138,4 +158,23 @@ export async function viewCardBalanceAndTransactions(cardId: number | undefined)
     }
 }
 
+export async function blockCard(cardInfos: { cardId: number, password: string }) {
+    const { cardId, password } = cardInfos;
+
+    const card: cardRepository.Card = await checkIfTheCardExists(cardId);
+
+    checksThatTheCardIsNotExpired(card);
+    
+    if(card.isBlocked) {
+        throw { code: "Error_Blocked_Card", message: "The card is already blocked!" };
+    }
+
+    validatePassword(password, card.password);
+
+    const cardUpdated: cardRepository.CardUpdateData = {
+        isBlocked: true
+    };
+    
+    await cardRepository.update(cardId, cardUpdated);
+}
 
