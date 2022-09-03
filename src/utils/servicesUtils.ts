@@ -1,8 +1,5 @@
-export function checkIfItDoesNotExist(entity: any, code: string, message: string) {
-    if(!entity) {
-        throw { code, message };
-    }
-    return;
+export function throwError(code: string, message: string) {
+    throw { code, message };
 }
 
 export function checkIfItExists(entity: any, code: string, message: string) {

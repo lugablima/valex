@@ -37,3 +37,9 @@ export function decryptCvc(encryptedCvc: string): string {
     const decryptedCvc: string = cryptr.decrypt(encryptedCvc);
     return decryptedCvc;
 }
+
+export function calculateTotalAmount(array: any[]): number {
+    if(!array.length) return 0;
+
+    return array.reduce((prev, curr) => prev + curr.amount, 0);
+}

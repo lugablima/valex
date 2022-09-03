@@ -9,15 +9,9 @@ import * as cardsUtils from "../utils/cardsUtils";
 import * as rechargeRepository from "../repositories/rechargeRepository";
 import * as paymentRepository from "../repositories/paymentRepository";
 
-function calculateTotalAmount(array: any[]): number {
-    if(!array.length) return 0;
-
-    return array.reduce((prev, curr) => prev + curr.amount, 0);
-}
-
 function calculateBalance(transactions: paymentRepository.PaymentWithBusinessName[], recharges: rechargeRepository.Recharge[]): number {
-    const totalTransactions: number = calculateTotalAmount(transactions);
-    const totalRecharges: number = calculateTotalAmount(recharges);
+    const totalTransactions: number = cardsUtils.calculateTotalAmount(transactions);
+    const totalRecharges: number = cardsUtils.calculateTotalAmount(recharges);
      
     const balance = totalRecharges - totalTransactions;
      
@@ -41,7 +35,7 @@ function checksThatTheCardIsNotExpired(card: cardRepository.Card) {
         throw { code: "Error_Card_Is_Expired", message: "The card is expired!" };
     }
 }
-
+ 
 function checkPasswordFormat(password: string) {
     const passwordRegex: RegExp = /^[0-9]{4}$/;
 
