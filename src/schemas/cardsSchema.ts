@@ -15,3 +15,8 @@ export const cardLock: Schema = joi.object({
     cardId: joi.number().integer().positive().required(),
     password: joi.string().trim().required()
 }); 
+
+export const virtualCard: Schema = joi.object({
+    originalCardId: joi.number().integer().positive().required(),
+    originalCardPassword: joi.string().trim().required()
+}); 

@@ -42,3 +42,11 @@ export async function unlockCard(req: Request, res: Response) {
         
     res.status(200).send("Card unlocked successfully!");
 }
+
+export async function createVirtualCard(req: Request, res: Response) {
+    const cardInfos: { originalCardId: number, originalCardPassword: string } = req.body;
+
+    const virtualCard = await cardsService.createVirtualCard(cardInfos);
+        
+    res.status(201).send(virtualCard);
+}

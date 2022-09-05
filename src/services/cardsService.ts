@@ -192,3 +192,45 @@ export async function unlockCard(cardInfos: { cardId: number, password: string }
     
     await cardsRepository.update(cardId, cardUpdated);
 }
+
+export async function createVirtualCard(cardInfos: { originalCardId: number, originalCardPassword: string }) {
+    const { originalCardId, originalCardPassword } = cardInfos;
+
+    const card: cardsRepository.Card = await checkIfTheCardExists(originalCardId);
+
+    validatePassword(originalCardPassword, card.password);
+ 
+    const cardNumber: string = faker.finance.creditCardNumber("mastercard");
+    const expirationDate: string = dayjs().add(5, "year").format("MM/YY");
+    const cvc: string = faker.finance.creditCardCVV();
+    
+    const encryptedCvc: string = cardsUtils.encryptCvc(cvc);
+    
+    const virtualCard: cardsRepository.CardInsertData = {
+        number: cardNumber,
+        employeeId: card.employeeId,
+        cardholderName: card.cardholderName,
+        securityCode: encryptedCvc,
+        expirationDate,
+        password: card.password,
+        isVirtual: true,
+        originalCardId,
+        isBlocked: false,
+        type: card.type
+    }
+
+    const { id } = await cardsRepository.insert(virtualCard);
+
+    return {
+        id, 
+        number: cardNumber,
+        employeeId: card.employeeId,
+        cardholderName: card.cardholderName,
+        securityCode: cvc,
+        expirationDate,
+        isVirtual: true,
+        originalCardId,
+        isBlocked: false,
+        type: card.type
+    }
+}
