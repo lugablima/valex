@@ -38,6 +38,10 @@ export function typeConflict(entity: string) {
     return { code: "TypeConflict", message: `${entity} has a type conflict!` };
 }
 
+export function differentTypes(entities: string) {
+    return { code: "DifferentTypes", message: `${entities} are of different types!` };
+}
+
 export function notRegistered(entity: string) {
     return { code: "NotRegistered", message: `There is no registered ${entity}!` };
 }

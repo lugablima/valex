@@ -8,7 +8,8 @@ export default function errorHandlerMiddleware(error: any, req: Request, res: Re
     if(error.code === "Invalid" || 
     error.code === "Expired" ||
     error.code === "NotActivated" ||
-    error.code === "Insufficient") {
+    error.code === "Insufficient" ||
+    error.code === "DifferentTypes") {
         return res.status(401).send(error.message);
     }
 
