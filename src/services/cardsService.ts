@@ -2,6 +2,7 @@ import "../setup";
 import { faker } from '@faker-js/faker';
 import dayjs from "dayjs";
 import bcrypt from "bcrypt";
+import * as errorHandlingUtils from "../utils/errorHandlingUtils";
 import * as companyRepository from "../repositories/companyRepository";
 import * as employeeRepository from "../repositories/employeeRepository";
 import * as cardRepository from "../repositories/cardRepository";
@@ -24,30 +25,24 @@ export async function calculateBalance(cardId: number) {
 }
 
 export async function checkIfTheApiKeyIsValid(apiKey: string | undefined) {
-    if(!apiKey) {
-        throw { code: "Error_Api_Key_Not_Sent", message: "The api key was not sent" };
-    }
+    if(!apiKey) throw errorHandlingUtils.notSend("API key");
     
     const company: companyRepository.Company | undefined = await companyRepository.findByApiKey(apiKey); 
 
-    if(!company) {
-        throw { code: "Error_Invalid_Api_Key", message: "The api key is invalid" };
-    }
+    if(!company) throw errorHandlingUtils.invalid("API key");
 }
 
 export async function checkIfTheCardExists(cardId: number) {
     const card: cardRepository.Card | undefined = await cardRepository.findById(cardId);
 
-    if(!card) {
-        throw { code: "Error_Invalid_Card_Id", message: "Card id is invalid!" };
-    }
+    if(!card) throw errorHandlingUtils.notFound("Card");
 
     return card;
 }
 
 export function checksThatTheCardIsNotExpired(card: cardRepository.Card) {
     if(dayjs(dayjs().format("MM/YY")).isAfter(card.expirationDate)) {
-        throw { code: "Error_Card_Is_Expired", message: "The card is expired!" };
+        throw errorHandlingUtils.expired("card"); 
     }
 }
  
@@ -55,7 +50,7 @@ function checkPasswordFormat(password: string) {
     const passwordRegex: RegExp = /^[0-9]{4}$/;
 
     if(!passwordRegex.test(password)) {
-        throw { code: "Error_Invalid_Password", message: "The password must consist of 4 numbers!" };
+        throw errorHandlingUtils.invalid("password format"); 
     }
 }
 
@@ -63,11 +58,11 @@ export function validatePassword(password: string, encryptedPassword: string | u
     checkPasswordFormat(password);
 
     if(!encryptedPassword) {
-        throw { code: "Error_There_Is_No_Password", message: "There is no password registered for this card!" };
+        throw errorHandlingUtils.notActivated("Card"); 
     }
 
     if(!bcrypt.compareSync(password, encryptedPassword)) {
-        throw { code: "Error_Invalid_Password", message: "The password is invalid!" };
+        throw errorHandlingUtils.invalid("password"); 
     }
 }
 
@@ -76,15 +71,11 @@ export async function createCard(data: { employeeId: number, type: cardRepositor
 
     const employee: employeeRepository.Employee | undefined = await employeeRepository.findById(data.employeeId); 
 
-    if(!employee) {
-        throw { code: "Error_Invalid_Employee", message: "This employee is not registered" };
-    }
+    if(!employee) throw errorHandlingUtils.notFound("Employee"); 
 
     const employeeCards: cardRepository.Card | undefined = await cardRepository.findByTypeAndEmployeeId(data.type, data.employeeId);
 
-    if(employeeCards) {
-        throw { code: "Error_Card_Type_Conflict", message: "There is already a card of this type registered for this user" };
-    }
+    if(employeeCards) throw errorHandlingUtils.typeConflict("Card"); 
 
     const cardNumber: string = faker.finance.account(16);
     const nameOnCard: string = cardsUtils.generateNameOnCard(employee.fullName);
@@ -107,6 +98,17 @@ export async function createCard(data: { employeeId: number, type: cardRepositor
     }
 
     await cardRepository.insert(card);
+
+    return {
+        number: cardNumber,
+        employeeId: data.employeeId,
+        cardholderName: nameOnCard,
+        securityCode: cvc,
+        expirationDate,
+        isVirtual: false,
+        isBlocked: true,
+        type: data.type
+    }
 }
 
 export async function activateCard(cardInfo: { cardId: number, cvc: string, password: string }) {
@@ -116,15 +118,11 @@ export async function activateCard(cardInfo: { cardId: number, cvc: string, pass
 
     checksThatTheCardIsNotExpired(card);
 
-    if(card.password) {
-        throw { code: "Error_Card_Already_Activated", message: "The card is already activated!" };
-    }
+    if(card.password) throw errorHandlingUtils.activated("card"); 
 
     const decryptedCvc: string = cardsUtils.decryptCvc(card.securityCode);
 
-    if(cvc !== decryptedCvc) {
-        throw { code: "Error_Invalid_CVC", message: "CVC is invalid!" };
-    }
+    if(cvc !== decryptedCvc) throw errorHandlingUtils.invalid("CVC");    
 
     checkPasswordFormat(password);
 
@@ -141,9 +139,7 @@ export async function activateCard(cardInfo: { cardId: number, cvc: string, pass
 }
 
 export async function viewCardBalanceAndTransactions(cardId: number | undefined) {
-    if(!cardId) {
-        throw { code: "Error_Card_Id_Not_Sent", message: "Card id not sent" };
-    }
+    if(!cardId) throw errorHandlingUtils.notSend("Card id");    
 
     await checkIfTheCardExists(cardId);
 
@@ -163,9 +159,7 @@ export async function blockCard(cardInfos: { cardId: number, password: string })
 
     checksThatTheCardIsNotExpired(card);
     
-    if(card.isBlocked) {
-        throw { code: "Error_Blocked_Card", message: "The card is already blocked!" };
-    }
+    if(card.isBlocked) throw errorHandlingUtils.blocked("card"); 
 
     validatePassword(password, card.password);
 
@@ -183,9 +177,7 @@ export async function unlockCard(cardInfos: { cardId: number, password: string }
 
     checksThatTheCardIsNotExpired(card);
     
-    if(!card.isBlocked) {
-        throw { code: "Error_Unlocked_Card", message: "The card is already unlocked!" };
-    }
+    if(!card.isBlocked) throw errorHandlingUtils.unlocked("Card"); 
 
     validatePassword(password, card.password);
 
