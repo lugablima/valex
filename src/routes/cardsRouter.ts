@@ -10,5 +10,6 @@ cardsRouter.put("/cards", validateSchema(cardsSchema.cardActivation), cardsContr
 cardsRouter.get("/balance/:cardId", cardsController.viewCardBalanceAndTransactions);
 cardsRouter.put("/block-card", validateSchema(cardsSchema.cardLock), cardsController.blockCard);
 cardsRouter.put("/unlock-card", validateSchema(cardsSchema.cardLock), cardsController.unlockCard);
+cardsRouter.post("/virtual-card", validateSchema(cardsSchema.virtualCard), cardsController.createVirtualCard);
 
 export default cardsRouter;

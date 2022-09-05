@@ -24,20 +24,38 @@ async function checkIfTheCardHasEnoughBalance(cardId: number, amount: number) {
     }
 }
 
+async function checkCardDetails(number: string, cardholderName: string, expirationDate: string) {
+    const card: cardsRepository.Card | undefined = await cardsRepository.findByCardDetails(number, cardholderName, expirationDate);
+
+    if(!card) {
+        throw errorHandlingUtils.notFound("Card");
+    }
+
+    return card;
+}
+
+export function checkIfTheCardIsActivated(card: cardsRepository.Card) {
+    if(!card.password) {
+        throw errorHandlingUtils.notActivated("Card"); 
+    }
+}
+
+export function checkIfTheCardIsBlocked(card: cardsRepository.Card) {
+    if(card.isBlocked) {
+        throw errorHandlingUtils.blocked("card"); 
+    }
+}
+
 export async function payWithCard(cardInfos: { cardId: number, password: string, businessId: number, amount: number }) {
     const { cardId, password, businessId, amount } = cardInfos;
     
     const card: cardsRepository.Card = await cardsService.checkIfTheCardExists(cardId);
 
-    if(!card.password) {
-        throw errorHandlingUtils.notActivated("Card"); 
-    }
+    checkIfTheCardIsActivated(card);
     
     cardsService.checksThatTheCardIsNotExpired(card);
 
-    if(card.isBlocked) {
-        throw errorHandlingUtils.blocked("card"); 
-    }
+    checkIfTheCardIsBlocked(card);
 
     cardsService.validatePassword(password, card.password);
 
@@ -46,4 +64,38 @@ export async function payWithCard(cardInfos: { cardId: number, password: string,
     await checkIfTheCardHasEnoughBalance(cardId, amount);
 
     await paymentsRepository.insert({ cardId, businessId, amount });
+}
+
+export async function payOnlineWithCard(cardInfos: {
+    number: string,
+    cardholderName: string,
+    expirationDate: string,
+    cvc: string,
+    businessId: number,
+    amount: number
+}) {
+    const {
+        number,
+        cardholderName,
+        expirationDate,
+        cvc,
+        businessId,
+        amount
+    } = cardInfos;
+    
+    const card: cardsRepository.Card = await checkCardDetails(number, cardholderName, expirationDate);
+
+    cardsService.validateCVC(cvc, card.securityCode);
+
+    checkIfTheCardIsActivated(card);
+    
+    cardsService.checksThatTheCardIsNotExpired(card);
+
+    checkIfTheCardIsBlocked(card);
+
+    await checkIfItIsAValidBusiness(businessId, card);
+
+    await checkIfTheCardHasEnoughBalance(card.id, amount);
+
+    await paymentsRepository.insert({ cardId: card.id, businessId, amount });
 }
