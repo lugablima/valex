@@ -6,5 +6,5 @@ export async function payWithCard(req: Request, res: Response) {
 
     await paymentsServices.payWithCard(cardInfos);
         
-    res.status(201).send("Purchase made successfully!");
+    res.status(200).send("Purchase made successfully!");
 }

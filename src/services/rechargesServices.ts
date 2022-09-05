@@ -1,6 +1,7 @@
 import * as cardsService from "../services/cardsService";
 import * as cardRepository from "../repositories/cardRepository"; 
 import * as rechargeRepository from "../repositories/rechargeRepository";
+import * as errorHandlingUtils from "../utils/errorHandlingUtils";
 
 export async function rechargeCard(apiKey: string | undefined, cardInfos: { cardId: number, amount: number }) {
     const { cardId, amount } = cardInfos;
@@ -9,8 +10,12 @@ export async function rechargeCard(apiKey: string | undefined, cardInfos: { card
 
     const card: cardRepository.Card = await cardsService.checkIfTheCardExists(cardId);
 
-    if(!card.password || card.isBlocked) {
-        throw { code: "Error_Card_Is_Not_Activated", message: "Card is not activated!" };
+    if(!card.password) {
+        throw errorHandlingUtils.notActivated("Card"); 
+    }
+
+    if(card.isBlocked) {
+        throw errorHandlingUtils.blocked("card");
     }
     
     cardsService.checksThatTheCardIsNotExpired(card);
