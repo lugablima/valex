@@ -66,6 +66,12 @@ export function validatePassword(password: string, encryptedPassword: string | u
     }
 }
 
+export function validateCVC(cvc: string, encryptCvc: string) {
+    const decryptedCvc: string = cardsUtils.decryptCvc(encryptCvc);
+
+    if(cvc !== decryptedCvc) throw errorHandlingUtils.invalid("CVC");  
+}
+
 export async function createCard(data: { employeeId: number, type: cardsRepository.TransactionTypes }, apiKey: string | undefined) {
     await checkIfTheApiKeyIsValid(apiKey);
 
@@ -121,10 +127,8 @@ export async function activateCard(cardInfo: { cardId: number, cvc: string, pass
 
     if(card.password) throw errorHandlingUtils.activated("card"); 
 
-    const decryptedCvc: string = cardsUtils.decryptCvc(card.securityCode);
-
-    if(cvc !== decryptedCvc) throw errorHandlingUtils.invalid("CVC");    
-
+    validateCVC(cvc, card.securityCode);
+   
     checkPasswordFormat(password);
 
     const saltRounds: number = 10;
