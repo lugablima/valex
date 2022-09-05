@@ -1,6 +1,6 @@
-import * as cardsService from "../services/cardsService";
-import * as cardRepository from "../repositories/cardRepository"; 
-import * as rechargeRepository from "../repositories/rechargeRepository";
+import * as cardsService from "./cardsService";
+import * as cardsRepository from "../repositories/cardsRepository"; 
+import * as rechargesRepository from "../repositories/rechargesRepository";
 import * as errorHandlingUtils from "../utils/errorHandlingUtils";
 
 export async function rechargeCard(apiKey: string | undefined, cardInfos: { cardId: number, amount: number }) {
@@ -8,7 +8,7 @@ export async function rechargeCard(apiKey: string | undefined, cardInfos: { card
     
     await cardsService.checkIfTheApiKeyIsValid(apiKey);
 
-    const card: cardRepository.Card = await cardsService.checkIfTheCardExists(cardId);
+    const card: cardsRepository.Card = await cardsService.checkIfTheCardExists(cardId);
 
     if(!card.password) {
         throw errorHandlingUtils.notActivated("Card"); 
@@ -20,5 +20,5 @@ export async function rechargeCard(apiKey: string | undefined, cardInfos: { card
     
     cardsService.checksThatTheCardIsNotExpired(card);
 
-    await rechargeRepository.insert({ cardId, amount });
+    await rechargesRepository.insert({ cardId, amount });
 }

@@ -1,10 +1,10 @@
-import * as cardsService from "../services/cardsService";
-import * as cardRepository from "../repositories/cardRepository";
+import * as cardsService from "./cardsService";
+import * as cardsRepository from "../repositories/cardsRepository";
 import * as businessRepository from "../repositories/businessRepository"; 
-import * as paymentRepository from "../repositories/paymentRepository";
+import * as paymentsRepository from "../repositories/paymentsRepository";
 import * as errorHandlingUtils from "../utils/errorHandlingUtils";
 
-async function checkIfItIsAValidBusiness(businessId: number, card: cardRepository.Card) {
+async function checkIfItIsAValidBusiness(businessId: number, card: cardsRepository.Card) {
     const business: businessRepository.Business | undefined = await businessRepository.findById(businessId) 
 
     if(!business) {
@@ -27,7 +27,7 @@ async function checkIfTheCardHasEnoughBalance(cardId: number, amount: number) {
 export async function payWithCard(cardInfos: { cardId: number, password: string, businessId: number, amount: number }) {
     const { cardId, password, businessId, amount } = cardInfos;
     
-    const card: cardRepository.Card = await cardsService.checkIfTheCardExists(cardId);
+    const card: cardsRepository.Card = await cardsService.checkIfTheCardExists(cardId);
 
     if(!card.password) {
         throw errorHandlingUtils.notActivated("Card"); 
@@ -45,5 +45,5 @@ export async function payWithCard(cardInfos: { cardId: number, password: string,
 
     await checkIfTheCardHasEnoughBalance(cardId, amount);
 
-    await paymentRepository.insert({ cardId, businessId, amount });
+    await paymentsRepository.insert({ cardId, businessId, amount });
 }
