@@ -1,17 +1,18 @@
-import * as cardsService from "../services/cardsService";
-import * as cardRepository from "../repositories/cardRepository";
+import * as cardsService from "./cardsService";
+import * as cardsRepository from "../repositories/cardsRepository";
 import * as businessRepository from "../repositories/businessRepository"; 
-import * as paymentRepository from "../repositories/paymentRepository";
+import * as paymentsRepository from "../repositories/paymentsRepository";
+import * as errorHandlingUtils from "../utils/errorHandlingUtils";
 
-async function checkIfItIsAValidBusiness(businessId: number, card: cardRepository.Card) {
+async function checkIfItIsAValidBusiness(businessId: number, card: cardsRepository.Card) {
     const business: businessRepository.Business | undefined = await businessRepository.findById(businessId) 
 
     if(!business) {
-        throw { code: "Error_Invalid_Business", message: "Invalid business id!" };
+        throw errorHandlingUtils.notFound("Business"); 
     }
 
     if(business.type !== card.type) {
-        throw { code: "Error_Invalid_Business", message: "Card and business are of different types!" };
+        throw errorHandlingUtils.differentTypes("Card and business"); 
     }
 }
 
@@ -19,23 +20,23 @@ async function checkIfTheCardHasEnoughBalance(cardId: number, amount: number) {
     const { balance } = await cardsService.calculateBalance(cardId);
 
     if(amount > balance) {
-        throw { code: "Error_Insufficient_Balance", message: "The card balance is insufficient for this purchase!" };
+        throw errorHandlingUtils.insufficient("balance"); 
     }
 }
 
 export async function payWithCard(cardInfos: { cardId: number, password: string, businessId: number, amount: number }) {
     const { cardId, password, businessId, amount } = cardInfos;
     
-    const card: cardRepository.Card = await cardsService.checkIfTheCardExists(cardId);
+    const card: cardsRepository.Card = await cardsService.checkIfTheCardExists(cardId);
 
     if(!card.password) {
-        throw { code: "Error_Card_Is_Not_Activated", message: "Card is not activated!" };
+        throw errorHandlingUtils.notActivated("Card"); 
     }
     
     cardsService.checksThatTheCardIsNotExpired(card);
 
     if(card.isBlocked) {
-        throw { code: "Error_Blocked_Card", message: "The card is blocked!" };
+        throw errorHandlingUtils.blocked("card"); 
     }
 
     cardsService.validatePassword(password, card.password);
@@ -44,5 +45,5 @@ export async function payWithCard(cardInfos: { cardId: number, password: string,
 
     await checkIfTheCardHasEnoughBalance(cardId, amount);
 
-    await paymentRepository.insert({ cardId, businessId, amount });
+    await paymentsRepository.insert({ cardId, businessId, amount });
 }
