@@ -3,3 +3,5 @@ database/
 .env
 .env.dev
 .wakatime-project
+.eslint*
+.prettier*
