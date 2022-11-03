@@ -1,28 +1,25 @@
-import { connection } from "../db/postgres";
+import { prisma } from "../config/prisma";
 
 export interface Recharge {
-  id: number;
-  cardId: number;
-  timestamp: Date;
-  amount: number;
+	id: number;
+	cardId: number;
+	timestamp: Date;
+	amount: number;
 }
 export type RechargeInsertData = Omit<Recharge, "id" | "timestamp">;
 
 export async function findByCardId(cardId: number) {
-  const result = await connection.query<Recharge, [number]>(
-    `SELECT id, "cardId", to_char(timestamp, 'DD/MM/YYYY') AS timestamp, amount 
-    FROM recharges WHERE "cardId" = $1`,
-    [cardId]
-  );
+	const result = await prisma.recharge.findFirst({
+		where: {
+			cardId,
+		},
+	});
 
-  return result.rows;
+	return result;
 }
 
 export async function insert(rechargeData: RechargeInsertData) {
-  const { cardId, amount } = rechargeData;
-
-  connection.query<any, [number, number]>(
-    `INSERT INTO recharges ("cardId", amount) VALUES ($1, $2)`,
-    [cardId, amount]
-  );
+	await prisma.recharge.create({
+		data: rechargeData,
+	});
 }
