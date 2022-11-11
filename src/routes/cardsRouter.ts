@@ -9,7 +9,7 @@ cardsRouter.post("/cards", validateSchema(cardsSchema.create), cardsController.c
 cardsRouter.patch("/cards/activate", validateSchema(cardsSchema.activate), cardsController.activate);
 cardsRouter.get("/cards/balance/:cardId", cardsController.viewBalanceAndTransactions);
 cardsRouter.patch("/cards/block", validateSchema(cardsSchema.blockOrUnlock), cardsController.block);
-cardsRouter.put("/unlock-card", validateSchema(cardsSchema.cardLock), cardsController.unlockCard);
+cardsRouter.patch("/cards/unlock", validateSchema(cardsSchema.blockOrUnlock), cardsController.unlock);
 cardsRouter.post("/virtual-card", validateSchema(cardsSchema.virtualCard), cardsController.createVirtualCard);
 
 export default cardsRouter;

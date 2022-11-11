@@ -109,22 +109,16 @@ export async function block({ cardId, password }: cardsTypes.BlockOrUnlockCardSc
 	await cardsRepository.update(cardId, { isBlocked: true });
 }
 
-export async function unlockCard(cardInfos: { cardId: number, password: string }) {
-    const { cardId, password } = cardInfos;
+export async function unlock({ cardId, password }: cardsTypes.BlockOrUnlockCardSchema) {
+	const card = await validateCardIdOrFail(cardId);
 
-    const card: cardsRepository.Card = await checkIfTheCardExists(cardId);
+	cardsUtils.checksThatTheCardIsNotExpired(card.expirationDate);
 
-    checksThatTheCardIsNotExpired(card);
+	if (!card.isBlocked) throw errorHandlingUtils.unlocked("Card");
     
-    if(!card.isBlocked) throw errorHandlingUtils.unlocked("Card"); 
+	cardsUtils.validatePassword(password, card.password);
 
-    validatePassword(password, card.password);
-
-    const cardUpdated: cardsRepository.CardUpdateData = {
-        isBlocked: false
-    };
-    
-    await cardsRepository.update(cardId, cardUpdated);
+	await cardsRepository.update(cardId, { isBlocked: false });
 }
 
 export async function createVirtualCard(cardInfos: { originalCardId: number, originalCardPassword: string }) {
