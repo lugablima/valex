@@ -16,12 +16,12 @@ export async function activate(req: Request, res: Response) {
     res.status(200).send("Card activated successfully!");
 }
 
-export async function viewCardBalanceAndTransactions(req: Request, res: Response) {
+export async function viewBalanceAndTransactions(req: Request, res: Response) {
     const cardId: number = parseInt(req.params.cardId);
 
-    const balance = await cardsService.viewCardBalanceAndTransactions(cardId);
+	const balanceAndTransactions = await cardsService.viewBalanceAndTransactions(cardId);
         
-    res.status(200).send(balance);
+	res.status(200).send(balanceAndTransactions);
 }
 
 export async function blockCard(req: Request, res: Response) {

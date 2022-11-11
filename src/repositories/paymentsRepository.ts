@@ -1,4 +1,5 @@
 import { prisma } from "../config/prisma";
+import * as paymentsTypes from "../types/paymentsTypes";
 
 export interface Payment {
 	id: number;
@@ -10,8 +11,8 @@ export interface Payment {
 export type PaymentWithBusinessName = Payment & { businessName: string };
 export type PaymentInsertData = Omit<Payment, "id" | "timestamp">;
 
-export async function findByCardId(cardId: number) {
-	const result = await prisma.payment.findFirst({
+export async function findAllByCardId(cardId: number): Promise<paymentsTypes.PaymentDataWithBusinessName[]> {
+	const transactions = await prisma.payment.findMany({
 		where: { cardId },
 		select: {
 			id: true,
@@ -21,9 +22,10 @@ export async function findByCardId(cardId: number) {
 			timestamp: true,
 			amount: true,
 		},
+		orderBy: { timestamp: "asc" },
 	});
 
-	return result;
+	return transactions.map(({ business, ...transaction }) => ({ ...transaction, businessName: business.name }));
 }
 
 // export async function findByCardId(cardId: number) {
@@ -39,7 +41,5 @@ export async function findByCardId(cardId: number) {
 // }
 
 export async function insert(paymentData: PaymentInsertData) {
-	await prisma.payment.create({
-		data: paymentData,
-	});
+	await prisma.payment.create({ data: paymentData });
 }

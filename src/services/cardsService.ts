@@ -12,16 +12,16 @@ import * as paymentsRepository from "../repositories/paymentsRepository";
 import * as cardsTypes from "../types/cardsTypes";
 import { Card, TransactionType } from "@prisma/client";
 
-export async function calculateBalance(cardId: number) {
-    const transactions: paymentsRepository.PaymentWithBusinessName[] = await paymentsRepository.findByCardId(cardId); 
-    const recharges: rechargesRepository.Recharge[] = await rechargesRepository.findByCardId(cardId);
+export async function calculateBalance(cardId: number): Promise<cardsTypes.BalanceCard> {
+	const transactions = await paymentsRepository.findAllByCardId(cardId);
+	const recharges = await rechargesRepository.findAllByCardId(cardId);
     
     const totalTransactions: number = cardsUtils.calculateTotalAmount(transactions);
     const totalRecharges: number = cardsUtils.calculateTotalAmount(recharges);
      
     let balance = totalRecharges - totalTransactions;
      
-    if(balance < 0) balance = 0;
+	if (balance < 0) balance = 0;
 
     return { balance, transactions, recharges };
 }
@@ -87,16 +87,12 @@ export async function activate({ cardId, cvc, password }: cardsTypes.ActivateCar
 	await cardsRepository.update(cardId, { password: cardsUtils.encryptPassword(password) });
 }
 
-export async function viewCardBalanceAndTransactions(cardId: number | undefined) {
-    if(!cardId) throw errorHandlingUtils.notSend("Card id");    
+export async function viewBalanceAndTransactions(cardId: number | undefined) {
+	if (!cardId) throw errorHandlingUtils.notSend("Card id");
 
-    await checkIfTheCardExists(cardId);
+	await validateCardIdOrFail(cardId);
 
-    const balance: { 
-        balance: number,
-        transactions: paymentsRepository.PaymentWithBusinessName[],
-        recharges: rechargesRepository.Recharge[]
-    } = await calculateBalance(cardId);
+	const balance = await calculateBalance(cardId);
 
     return balance;
 }

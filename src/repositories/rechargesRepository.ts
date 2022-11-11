@@ -8,14 +8,13 @@ export interface Recharge {
 }
 export type RechargeInsertData = Omit<Recharge, "id" | "timestamp">;
 
-export async function findByCardId(cardId: number) {
-	const result = await prisma.recharge.findFirst({
+export async function findAllByCardId(cardId: number) {
+	return prisma.recharge.findMany({
 		where: {
 			cardId,
 		},
+		orderBy: { timestamp: "asc" },
 	});
-
-	return result;
 }
 
 export async function insert(rechargeData: RechargeInsertData) {
