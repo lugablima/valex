@@ -14,6 +14,7 @@
     "seed": "ts-node prisma/seed.ts"
   },
   "dependencies": {
+    "@faker-js/faker": "^7.6.0",
     "@prisma/client": "^4.5.0",
     "bcrypt": "^5.0.1",
     "cors": "^2.8.5",
@@ -25,7 +26,6 @@
     "joi": "^17.6.0"
   },
   "devDependencies": {
-    "@faker-js/faker": "^7.5.0",
     "@mermaid-js/mermaid-cli": "^9.1.7",
     "@types/bcrypt": "^5.0.0",
     "@types/cors": "^2.8.12",
