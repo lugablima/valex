@@ -6,6 +6,9 @@
     "paths": {
       "*": ["./src/*"] 
     },
+    "lib": [
+      "ES2021.String"
+    ],
     "outDir": "./dist",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
