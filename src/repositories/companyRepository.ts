@@ -7,9 +7,7 @@ export interface Company {
 }
 
 export async function findByApiKey(apiKey: string) {
-	const result = await prisma.company.findFirst({
+	return prisma.company.findFirst({
 		where: { apiKey },
 	});
-
-	return result;
 }

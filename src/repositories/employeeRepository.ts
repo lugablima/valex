@@ -9,11 +9,9 @@ export interface Employee {
 }
 
 export async function findById(id: number) {
-	const result = await prisma.employee.findUnique({
+	return prisma.employee.findUnique({
 		where: {
 			id,
 		},
 	});
-
-	return result;
 }
