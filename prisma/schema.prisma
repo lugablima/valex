@@ -1,0 +1,93 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+generator erd {
+  provider = "prisma-erd-generator"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Business {
+  id      Int             @id @default(autoincrement())
+  name    String          @unique
+  type    TransactionType
+  payment Payment[]
+
+  @@map("businesses")
+}
+
+model Card {
+  id             Int             @id @default(autoincrement())
+  employeeId     Int
+  number         String          @unique
+  cardholderName String
+  securityCode   String
+  expirationDate String
+  password       String?
+  isVirtual      Boolean
+  originalCardId Int?
+  isBlocked      Boolean
+  type           TransactionType
+  employee       Employee        @relation(fields: [employeeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  card           Card?           @relation("cardsTocards", fields: [originalCardId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  other_cards    Card[]          @relation("cardsTocards")
+  payment        Payment[]
+  recharge       Recharge[]
+
+  @@map("cards")
+}
+
+model Company {
+  id       Int        @id @default(autoincrement())
+  name     String     @unique
+  apiKey   String?
+  employee Employee[]
+
+  @@map("companies")
+}
+
+model Employee {
+  id        Int     @id @default(autoincrement())
+  fullName  String
+  cpf       String  @unique
+  email     String  @unique
+  companyId Int
+  company   Company @relation(fields: [companyId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  card      Card[]
+
+  @@map("employees")
+}
+
+model Payment {
+  id         Int      @id @default(autoincrement())
+  cardId     Int
+  businessId Int
+  timestamp  DateTime @default(now()) @db.Timestamp(0)
+  amount     Int
+  business   Business @relation(fields: [businessId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  card       Card     @relation(fields: [cardId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("payments")
+}
+
+model Recharge {
+  id        Int      @id @default(autoincrement())
+  cardId    Int
+  timestamp DateTime @default(now()) @db.Timestamp(0)
+  amount    Int
+  card      Card     @relation(fields: [cardId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("recharges")
+}
+
+enum TransactionType {
+  groceries
+  restaurant
+  transport
+  education
+  health
+}

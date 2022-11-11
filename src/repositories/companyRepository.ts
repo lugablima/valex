@@ -1,16 +1,13 @@
-import { connection } from "../db/postgres";
+import { prisma } from "../config/prisma";
 
 export interface Company {
-  id: number;
-  name: string;
-  apiKey?: string;
+	id: number;
+	name: string;
+	apiKey?: string;
 }
 
 export async function findByApiKey(apiKey: string) {
-  const result = await connection.query<Company, [string]>(
-    `SELECT * FROM companies WHERE "apiKey"=$1`,
-    [apiKey]
-  );
-
-  return result.rows[0];
+	return prisma.company.findFirst({
+		where: { apiKey },
+	});
 }

@@ -1,18 +1,17 @@
-import { connection } from "../db/postgres";
+import { prisma } from "../config/prisma";
 
 export interface Employee {
-  id: number;
-  fullName: string;
-  cpf: string;
-  email: string;
-  companyId: number;
+	id: number;
+	fullName: string;
+	cpf: string;
+	email: string;
+	companyId: number;
 }
 
 export async function findById(id: number) {
-  const result = await connection.query<Employee, [number]>(
-    "SELECT * FROM employees WHERE id=$1",
-    [id]
-  );
-
-  return result.rows[0];
+	return prisma.employee.findUnique({
+		where: {
+			id,
+		},
+	});
 }

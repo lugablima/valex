@@ -1,17 +1,12 @@
-import { connection } from "../db/postgres";
+import { prisma } from "../config/prisma";
 import { TransactionTypes } from "./cardsRepository";
 
 export interface Business {
-  id: number;
-  name: string;
-  type: TransactionTypes;
+	id: number;
+	name: string;
+	type: TransactionTypes;
 }
 
-export async function findById(id: number) {
-  const result = await connection.query<Business, [number]>(
-    "SELECT * FROM businesses WHERE id=$1",
-    [id]
-  );
-
-  return result.rows[0];
+export async function findById(id: number): Promise<Business | null> {
+	return prisma.business.findUnique({ where: { id } });
 }

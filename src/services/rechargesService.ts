@@ -1,24 +1,23 @@
 import * as cardsService from "./cardsService";
-import * as cardsRepository from "../repositories/cardsRepository"; 
 import * as rechargesRepository from "../repositories/rechargesRepository";
 import * as errorHandlingUtils from "../utils/errorHandlingUtils";
+import * as cardsUtils from "../utils/cardsUtils";
+import * as cardsTypes from "types/rechargesTypes";
 
-export async function rechargeCard(apiKey: string | undefined, cardInfos: { cardId: number, amount: number }) {
-    const { cardId, amount } = cardInfos;
-    
-    await cardsService.checkIfTheApiKeyIsValid(apiKey);
+export async function recharge(apiKey: string | undefined, { cardId, amount }: cardsTypes.RechargeSchema) {
+	await cardsService.validateApiKeyOrFail(apiKey);
 
-    const card: cardsRepository.Card = await cardsService.checkIfTheCardExists(cardId);
+	const card = await cardsService.validateCardIdOrFail(cardId);
 
-    if(!card.password) {
-        throw errorHandlingUtils.notActivated("Card"); 
-    }
+	if (!card.password) {
+		throw errorHandlingUtils.notActivated("Card");
+	}
 
-    if(card.isBlocked) {
-        throw errorHandlingUtils.blocked("card");
-    }
-    
-    cardsService.checksThatTheCardIsNotExpired(card);
+	if (card.isBlocked) {
+		throw errorHandlingUtils.blocked("card");
+	}
 
-    await rechargesRepository.insert({ cardId, amount });
+	cardsUtils.checksThatTheCardIsNotExpired(card.expirationDate);
+
+	await rechargesRepository.insert({ cardId, amount });
 }

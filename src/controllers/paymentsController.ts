@@ -1,25 +1,14 @@
 import { Request, Response } from "express";
 import * as paymentsService from "../services/paymentsService";
 
-export async function payWithCard(req: Request, res: Response) {
-    const cardInfos: { cardId: number, password: string, businessId: number, amount: number } = req.body;
+export async function pay(req: Request, res: Response) {
+	await paymentsService.pay(req.body);
 
-    await paymentsService.payWithCard(cardInfos);
-        
-    res.status(200).send("Purchase made successfully!");
+	res.status(200).send("Purchase made successfully!");
 }
 
-export async function payOnlineWithCard(req: Request, res: Response) {
-    const cardInfos: {
-        number: string,
-        cardholderName: string,
-        expirationDate: string,
-        cvc: string,
-        businessId: number,
-        amount: number
-    } = req.body;
+export async function payOnline(req: Request, res: Response) {
+	await paymentsService.payOnline(req.body);
 
-    await paymentsService.payOnlineWithCard(cardInfos);
-        
-    res.status(200).send("Successful online purchase!");
+	res.status(200).send("Successful online purchase!");
 }

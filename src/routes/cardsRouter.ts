@@ -5,11 +5,11 @@ import * as cardsController from "../controllers/cardsController";
 
 const cardsRouter = Router();
 
-cardsRouter.post("/cards", validateSchema(cardsSchema.card), cardsController.createCard);
-cardsRouter.put("/cards", validateSchema(cardsSchema.cardActivation), cardsController.activateCard);
-cardsRouter.get("/balance/:cardId", cardsController.viewCardBalanceAndTransactions);
-cardsRouter.put("/block-card", validateSchema(cardsSchema.cardLock), cardsController.blockCard);
-cardsRouter.put("/unlock-card", validateSchema(cardsSchema.cardLock), cardsController.unlockCard);
-cardsRouter.post("/virtual-card", validateSchema(cardsSchema.virtualCard), cardsController.createVirtualCard);
+cardsRouter.post("/cards", validateSchema(cardsSchema.create), cardsController.create);
+cardsRouter.patch("/cards/activate", validateSchema(cardsSchema.activate), cardsController.activate);
+cardsRouter.get("/cards/balance/:cardId", cardsController.viewBalanceAndTransactions);
+cardsRouter.patch("/cards/block", validateSchema(cardsSchema.blockOrUnlock), cardsController.block);
+cardsRouter.patch("/cards/unlock", validateSchema(cardsSchema.blockOrUnlock), cardsController.unlock);
+cardsRouter.post("/cards/virtual", validateSchema(cardsSchema.createVirtual), cardsController.createVirtual);
 
 export default cardsRouter;

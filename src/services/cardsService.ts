@@ -1,7 +1,5 @@
 import "../setup";
-import { faker } from '@faker-js/faker';
-import dayjs from "dayjs";
-import bcrypt from "bcrypt";
+import { faker } from "@faker-js/faker";
 import * as errorHandlingUtils from "../utils/errorHandlingUtils";
 import * as companyRepository from "../repositories/companyRepository";
 import * as employeeRepository from "../repositories/employeeRepository";
@@ -9,228 +7,142 @@ import * as cardsRepository from "../repositories/cardsRepository";
 import * as cardsUtils from "../utils/cardsUtils";
 import * as rechargesRepository from "../repositories/rechargesRepository";
 import * as paymentsRepository from "../repositories/paymentsRepository";
+import * as cardsTypes from "../types/cardsTypes";
+import { Card, TransactionType } from "@prisma/client";
 
-export async function calculateBalance(cardId: number) {
-    const transactions: paymentsRepository.PaymentWithBusinessName[] = await paymentsRepository.findByCardId(cardId); 
-    const recharges: rechargesRepository.Recharge[] = await rechargesRepository.findByCardId(cardId);
-    
-    const totalTransactions: number = cardsUtils.calculateTotalAmount(transactions);
-    const totalRecharges: number = cardsUtils.calculateTotalAmount(recharges);
-     
-    let balance = totalRecharges - totalTransactions;
-     
-    if(balance < 0) balance = 0;
+export async function calculateBalance(cardId: number): Promise<cardsTypes.BalanceCard> {
+	const transactions = await paymentsRepository.findAllByCardId(cardId);
+	const recharges = await rechargesRepository.findAllByCardId(cardId);
 
-    return { balance, transactions, recharges };
+	const totalTransactions: number = cardsUtils.calculateTotalAmount(transactions);
+	const totalRecharges: number = cardsUtils.calculateTotalAmount(recharges);
+
+	let balance = totalRecharges - totalTransactions;
+
+	if (balance < 0) balance = 0;
+
+	return { balance, transactions, recharges };
 }
 
-export async function checkIfTheApiKeyIsValid(apiKey: string | undefined) {
-    if(!apiKey) throw errorHandlingUtils.notSend("API key");
-    
-    const company: companyRepository.Company | undefined = await companyRepository.findByApiKey(apiKey); 
+export async function validateApiKeyOrFail(apiKey: string | undefined) {
+	if (!apiKey) throw errorHandlingUtils.notSend("API key");
 
-    if(!company) throw errorHandlingUtils.invalid("API key");
+	const company = await companyRepository.findByApiKey(apiKey);
+
+	if (!company) throw errorHandlingUtils.invalid("API key");
 }
 
-export async function checkIfTheCardExists(cardId: number) {
-    const card: cardsRepository.Card | undefined = await cardsRepository.findById(cardId);
+export async function validateCardIdOrFail(cardId: number) {
+	const card = await cardsRepository.findById(cardId);
 
-    if(!card) throw errorHandlingUtils.notFound("Card");
+	if (!card) throw errorHandlingUtils.notFound("Card");
 
-    return card;
+	return card;
 }
 
-export function checksThatTheCardIsNotExpired(card: cardsRepository.Card) {
-    if(dayjs(dayjs().format("MM/YY")).isAfter(card.expirationDate)) {
-        throw errorHandlingUtils.expired("card"); 
-    }
-}
- 
-function checkPasswordFormat(password: string) {
-    const passwordRegex: RegExp = /^[0-9]{4}$/;
+async function validateEmployeeIdOrFail(employeeId: number) {
+	const employee = await employeeRepository.findById(employeeId);
 
-    if(!passwordRegex.test(password)) {
-        throw errorHandlingUtils.invalid("password format"); 
-    }
+	if (!employee) throw errorHandlingUtils.notFound("Employee");
+
+	return employee;
 }
 
-export function validatePassword(password: string, encryptedPassword: string | undefined) {
-    checkPasswordFormat(password);
+async function validateConflictCard(type: TransactionType, employeeId: number) {
+	const employeeCard = await cardsRepository.findByTypeAndEmployeeId(type, employeeId);
 
-    if(!encryptedPassword) {
-        throw errorHandlingUtils.notActivated("Card"); 
-    }
-
-    if(!bcrypt.compareSync(password, encryptedPassword)) {
-        throw errorHandlingUtils.invalid("password"); 
-    }
+	if (employeeCard) throw errorHandlingUtils.typeConflict("Card");
 }
 
-export function validateCVC(cvc: string, encryptCvc: string) {
-    const decryptedCvc: string = cardsUtils.decryptCvc(encryptCvc);
+export async function create(
+	{ employeeId, type }: cardsTypes.CreateCardSchema,
+	apiKey: string | undefined
+): Promise<Card> {
+	await validateApiKeyOrFail(apiKey);
 
-    if(cvc !== decryptedCvc) throw errorHandlingUtils.invalid("CVC");  
+	const employee = await validateEmployeeIdOrFail(employeeId);
+
+	await validateConflictCard(type, employeeId);
+
+	const cardData = cardsUtils.generateCardInfos(employee.fullName, employeeId, type);
+
+	const createdCard = await cardsRepository.insert(cardData);
+
+	return { ...createdCard, securityCode: cardsUtils.decryptCvc(createdCard.securityCode) };
 }
 
-export async function createCard(data: { employeeId: number, type: cardsRepository.TransactionTypes }, apiKey: string | undefined) {
-    await checkIfTheApiKeyIsValid(apiKey);
+export async function activate({ cardId, cvc, password }: cardsTypes.ActivateCardSchema) {
+	const card = await validateCardIdOrFail(cardId);
 
-    const employee: employeeRepository.Employee | undefined = await employeeRepository.findById(data.employeeId); 
+	cardsUtils.checksThatTheCardIsNotExpired(card.expirationDate);
 
-    if(!employee) throw errorHandlingUtils.notFound("Employee"); 
+	if (card.password) throw errorHandlingUtils.activated("card");
 
-    const employeeCards: cardsRepository.Card | undefined = await cardsRepository.findByTypeAndEmployeeId(data.type, data.employeeId);
+	cardsUtils.validateCVC(cvc, card.securityCode);
 
-    if(employeeCards) throw errorHandlingUtils.typeConflict("Card"); 
+	cardsUtils.checkPasswordFormat(password);
 
-    const cardNumber: string = faker.finance.account(16);
-    const nameOnCard: string = cardsUtils.generateNameOnCard(employee.fullName);
-    const expirationDate: string = dayjs().add(5, "year").format("MM/YY");
-    const cvc: string = faker.finance.creditCardCVV();
-    
-    const encryptedCvc: string = cardsUtils.encryptCvc(cvc);
-    
-    const card: cardsRepository.CardInsertData = {
-        number: cardNumber,
-        employeeId: data.employeeId,
-        cardholderName: nameOnCard,
-        securityCode: encryptedCvc,
-        expirationDate,
-        password: undefined,
-        isVirtual: false,
-        originalCardId: undefined,
-        isBlocked: false,
-        type: data.type
-    }
-
-    const { id } = await cardsRepository.insert(card);
-
-    return {
-        id, 
-        number: cardNumber,
-        employeeId: data.employeeId,
-        cardholderName: nameOnCard,
-        securityCode: cvc,
-        expirationDate,
-        isVirtual: false,
-        isBlocked: false,
-        type: data.type
-    }
+	await cardsRepository.update(cardId, { password: cardsUtils.encryptPassword(password) });
 }
 
-export async function activateCard(cardInfo: { cardId: number, cvc: string, password: string }) {
-    const { cardId, cvc, password } = cardInfo;
+export async function viewBalanceAndTransactions(cardId: number | undefined) {
+	if (!cardId) throw errorHandlingUtils.notSend("Card id");
 
-    const card: cardsRepository.Card = await checkIfTheCardExists(cardId);
+	await validateCardIdOrFail(cardId);
 
-    checksThatTheCardIsNotExpired(card);
+	const balance = await calculateBalance(cardId);
 
-    if(card.password) throw errorHandlingUtils.activated("card"); 
-
-    validateCVC(cvc, card.securityCode);
-   
-    checkPasswordFormat(password);
-
-    const saltRounds: number = 10;
-    const cryptedPassword: string = bcrypt.hashSync(password, saltRounds);
-
-    const cardUpdated: cardsRepository.CardUpdateData = {
-        password: cryptedPassword
-        // originalCardId: cardId,
-        // isBlocked: false
-    };
-    
-    await cardsRepository.update(cardId, cardUpdated);
+	return balance;
 }
 
-export async function viewCardBalanceAndTransactions(cardId: number | undefined) {
-    if(!cardId) throw errorHandlingUtils.notSend("Card id");    
+export async function block({ cardId, password }: cardsTypes.BlockOrUnlockCardSchema) {
+	const card = await validateCardIdOrFail(cardId);
 
-    await checkIfTheCardExists(cardId);
+	cardsUtils.checksThatTheCardIsNotExpired(card.expirationDate);
 
-    const balance: { 
-        balance: number,
-        transactions: paymentsRepository.PaymentWithBusinessName[],
-        recharges: rechargesRepository.Recharge[]
-    } = await calculateBalance(cardId);
+	if (card.isBlocked) throw errorHandlingUtils.blocked("card");
 
-    return balance;
+	cardsUtils.validatePassword(password, card.password);
+
+	await cardsRepository.update(cardId, { isBlocked: true });
 }
 
-export async function blockCard(cardInfos: { cardId: number, password: string }) {
-    const { cardId, password } = cardInfos;
+export async function unlock({ cardId, password }: cardsTypes.BlockOrUnlockCardSchema) {
+	const card = await validateCardIdOrFail(cardId);
 
-    const card: cardsRepository.Card = await checkIfTheCardExists(cardId);
+	cardsUtils.checksThatTheCardIsNotExpired(card.expirationDate);
 
-    checksThatTheCardIsNotExpired(card);
-    
-    if(card.isBlocked) throw errorHandlingUtils.blocked("card"); 
+	if (!card.isBlocked) throw errorHandlingUtils.unlocked("Card");
 
-    validatePassword(password, card.password);
+	cardsUtils.validatePassword(password, card.password);
 
-    const cardUpdated: cardsRepository.CardUpdateData = {
-        isBlocked: true
-    };
-    
-    await cardsRepository.update(cardId, cardUpdated);
+	await cardsRepository.update(cardId, { isBlocked: false });
 }
 
-export async function unlockCard(cardInfos: { cardId: number, password: string }) {
-    const { cardId, password } = cardInfos;
+export async function createVirtual({
+	originalCardId,
+	originalCardPassword,
+}: cardsTypes.CreateVirtualCardSchema): Promise<Card> {
+	const card = await validateCardIdOrFail(originalCardId);
 
-    const card: cardsRepository.Card = await checkIfTheCardExists(cardId);
+	cardsUtils.validatePassword(originalCardPassword, card.password);
 
-    checksThatTheCardIsNotExpired(card);
-    
-    if(!card.isBlocked) throw errorHandlingUtils.unlocked("Card"); 
+	const cardData = cardsUtils.generateCardInfos("John Doe", card.employeeId, card.type);
 
-    validatePassword(password, card.password);
+	const virtualCard: cardsTypes.CreateCardData = {
+		...cardData,
+		cardholderName: card.cardholderName,
+		password: card.password,
+		number: faker.finance.creditCardNumber("mastercard").replaceAll("-", ""),
+		isVirtual: true,
+		originalCardId,
+	};
 
-    const cardUpdated: cardsRepository.CardUpdateData = {
-        isBlocked: false
-    };
-    
-    await cardsRepository.update(cardId, cardUpdated);
-}
+	const createdVirtualCard = await cardsRepository.insert(virtualCard);
 
-export async function createVirtualCard(cardInfos: { originalCardId: number, originalCardPassword: string }) {
-    const { originalCardId, originalCardPassword } = cardInfos;
-
-    const card: cardsRepository.Card = await checkIfTheCardExists(originalCardId);
-
-    validatePassword(originalCardPassword, card.password);
- 
-    const cardNumber: string = faker.finance.creditCardNumber("mastercard");
-    const expirationDate: string = dayjs().add(5, "year").format("MM/YY");
-    const cvc: string = faker.finance.creditCardCVV();
-    
-    const encryptedCvc: string = cardsUtils.encryptCvc(cvc);
-    
-    const virtualCard: cardsRepository.CardInsertData = {
-        number: cardNumber,
-        employeeId: card.employeeId,
-        cardholderName: card.cardholderName,
-        securityCode: encryptedCvc,
-        expirationDate,
-        password: card.password,
-        isVirtual: true,
-        originalCardId,
-        isBlocked: false,
-        type: card.type
-    }
-
-    const { id } = await cardsRepository.insert(virtualCard);
-
-    return {
-        id, 
-        number: cardNumber,
-        employeeId: card.employeeId,
-        cardholderName: card.cardholderName,
-        securityCode: cvc,
-        expirationDate,
-        isVirtual: true,
-        originalCardId,
-        isBlocked: false,
-        type: card.type
-    }
+	return {
+		...createdVirtualCard,
+		securityCode: cardsUtils.decryptCvc(createdVirtualCard.securityCode),
+		password: originalCardPassword,
+	};
 }
