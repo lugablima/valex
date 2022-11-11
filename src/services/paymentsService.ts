@@ -3,15 +3,18 @@ import * as cardsRepository from "../repositories/cardsRepository";
 import * as businessRepository from "../repositories/businessRepository"; 
 import * as paymentsRepository from "../repositories/paymentsRepository";
 import * as errorHandlingUtils from "../utils/errorHandlingUtils";
+import * as cardsUtils from "../utils/cardsUtils";
+import * as paymentsTypes from "types/paymentsTypes";
+import { Card } from "@prisma/client";
 
-async function checkIfItIsAValidBusiness(businessId: number, card: cardsRepository.Card) {
-    const business: businessRepository.Business | undefined = await businessRepository.findById(businessId) 
+async function checkIfItIsAValidBusiness(businessId: number, card: Card) {
+	const business = await businessRepository.findById(businessId);
 
-    if(!business) {
+	if (!business) {
         throw errorHandlingUtils.notFound("Business"); 
     }
 
-    if(business.type !== card.type) {
+	if (business.type !== card.type) {
         throw errorHandlingUtils.differentTypes("Card and business"); 
     }
 }
@@ -19,7 +22,7 @@ async function checkIfItIsAValidBusiness(businessId: number, card: cardsReposito
 async function checkIfTheCardHasEnoughBalance(cardId: number, amount: number) {
     const { balance } = await cardsService.calculateBalance(cardId);
 
-    if(amount > balance) {
+	if (amount > balance) {
         throw errorHandlingUtils.insufficient("balance"); 
     }
 }
@@ -34,30 +37,16 @@ async function checkCardDetails(number: string, cardholderName: string, expirati
     return card;
 }
 
-export function checkIfTheCardIsActivated(card: cardsRepository.Card) {
-    if(!card.password) {
-        throw errorHandlingUtils.notActivated("Card"); 
-    }
-}
+export async function pay({ cardId, password, businessId, amount }: paymentsTypes.PaymentSchema) {
+	const card = await cardsService.validateCardIdOrFail(cardId);
 
-export function checkIfTheCardIsBlocked(card: cardsRepository.Card) {
-    if(card.isBlocked) {
-        throw errorHandlingUtils.blocked("card"); 
-    }
-}
+	cardsUtils.checkIfTheCardIsActivated(card);
 
-export async function payWithCard(cardInfos: { cardId: number, password: string, businessId: number, amount: number }) {
-    const { cardId, password, businessId, amount } = cardInfos;
+	cardsUtils.checksThatTheCardIsNotExpired(card.expirationDate);
     
-    const card: cardsRepository.Card = await cardsService.checkIfTheCardExists(cardId);
+	cardsUtils.checkIfTheCardIsBlocked(card);
 
-    checkIfTheCardIsActivated(card);
-    
-    cardsService.checksThatTheCardIsNotExpired(card);
-
-    checkIfTheCardIsBlocked(card);
-
-    cardsService.validatePassword(password, card.password);
+	cardsUtils.validatePassword(password, card.password);
 
     await checkIfItIsAValidBusiness(businessId, card);
 

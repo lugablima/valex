@@ -5,7 +5,7 @@ import * as paymentsController from "../controllers/paymentsController";
 
 const paymentsRouter = Router();
 
-paymentsRouter.post("/payments", validateSchema(paymentsSchema.payment), paymentsController.payWithCard);
+paymentsRouter.post("/payments", validateSchema(paymentsSchema.payment), paymentsController.pay);
 paymentsRouter.post("/online-payments", validateSchema(paymentsSchema.onlinePayment), paymentsController.payOnlineWithCard);
 
 export default paymentsRouter;

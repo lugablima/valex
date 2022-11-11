@@ -8,9 +8,5 @@ export interface Business {
 }
 
 export async function findById(id: number): Promise<Business | null> {
-	const result = await prisma.business.findUnique({
-		where: { id },
-	});
-
-	return result;
+	return prisma.business.findUnique({ where: { id } });
 }
