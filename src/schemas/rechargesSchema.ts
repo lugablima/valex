@@ -1,6 +1,7 @@
-import joi, { Schema } from "joi";
+import joi from "joi";
+import * as cardsTypes from "../types/rechargesTypes";
 
-export const recharge: Schema = joi.object({
-    cardId: joi.number().integer().positive().required(),
-    amount: joi.number().integer().positive().required()
-}); 
+export const recharge = joi.object<cardsTypes.RechargeSchema>({
+	cardId: joi.number().integer().positive().required(),
+	amount: joi.number().integer().positive().required(),
+});

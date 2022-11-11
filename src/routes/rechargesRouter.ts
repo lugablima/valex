@@ -5,6 +5,6 @@ import * as rechargesController from "../controllers/rechargesController";
 
 const rechargesRouter = Router();
 
-rechargesRouter.post("/recharges", validateSchema(rechargesSchema.recharge), rechargesController.rechargeCard);
+rechargesRouter.post("/recharges", validateSchema(rechargesSchema.recharge), rechargesController.recharge);
 
 export default rechargesRouter;
