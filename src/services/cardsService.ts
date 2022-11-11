@@ -97,22 +97,16 @@ export async function viewBalanceAndTransactions(cardId: number | undefined) {
     return balance;
 }
 
-export async function blockCard(cardInfos: { cardId: number, password: string }) {
-    const { cardId, password } = cardInfos;
+export async function block({ cardId, password }: cardsTypes.BlockOrUnlockCardSchema) {
+	const card = await validateCardIdOrFail(cardId);
 
-    const card: cardsRepository.Card = await checkIfTheCardExists(cardId);
+	cardsUtils.checksThatTheCardIsNotExpired(card.expirationDate);
 
-    checksThatTheCardIsNotExpired(card);
+	if (card.isBlocked) throw errorHandlingUtils.blocked("card");
     
-    if(card.isBlocked) throw errorHandlingUtils.blocked("card"); 
+	cardsUtils.validatePassword(password, card.password);
 
-    validatePassword(password, card.password);
-
-    const cardUpdated: cardsRepository.CardUpdateData = {
-        isBlocked: true
-    };
-    
-    await cardsRepository.update(cardId, cardUpdated);
+	await cardsRepository.update(cardId, { isBlocked: true });
 }
 
 export async function unlockCard(cardInfos: { cardId: number, password: string }) {

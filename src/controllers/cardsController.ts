@@ -24,10 +24,8 @@ export async function viewBalanceAndTransactions(req: Request, res: Response) {
 	res.status(200).send(balanceAndTransactions);
 }
 
-export async function blockCard(req: Request, res: Response) {
-    const cardInfos: { cardId: number, password: string } = req.body;
-
-    await cardsService.blockCard(cardInfos);
+export async function block(req: Request, res: Response) {
+	await cardsService.block(req.body);
         
     res.status(200).send("Card blocked successfully!");
 }

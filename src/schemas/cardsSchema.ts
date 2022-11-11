@@ -12,9 +12,9 @@ export const activate = joi.object<cardsTypes.ActivateCardSchema>({
 	password: joi.string().trim().required(),
 }); 
 
-export const cardLock: Schema = joi.object({
+export const blockOrUnlock = joi.object<cardsTypes.BlockOrUnlockCardSchema>({
     cardId: joi.number().integer().positive().required(),
-    password: joi.string().trim().required()
+	password: joi.string().trim().required(),
 }); 
 
 export const virtualCard: Schema = joi.object({
