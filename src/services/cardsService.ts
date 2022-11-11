@@ -34,10 +34,10 @@ export async function validateApiKeyOrFail(apiKey: string | undefined) {
 	if (!company) throw errorHandlingUtils.invalid("API key");
 }
 
-export async function checkIfTheCardExists(cardId: number) {
-    const card: cardsRepository.Card | undefined = await cardsRepository.findById(cardId);
+export async function validateCardIdOrFail(cardId: number) {
+	const card = await cardsRepository.findById(cardId);
 
-    if(!card) throw errorHandlingUtils.notFound("Card");
+	if (!card) throw errorHandlingUtils.notFound("Card");
 
     return card;
 }
@@ -73,44 +73,18 @@ export async function create(
 	return { ...createdCard, securityCode: cardsUtils.decryptCvc(createdCard.securityCode) };
     }
 
-    const { id } = await cardsRepository.insert(card);
+export async function activate({ cardId, cvc, password }: cardsTypes.ActivateCardSchema) {
+	const card = await validateCardIdOrFail(cardId);
 
-    return {
-        id, 
-        number: cardNumber,
-        employeeId: data.employeeId,
-        cardholderName: nameOnCard,
-        securityCode: cvc,
-        expirationDate,
-        isVirtual: false,
-        isBlocked: false,
-        type: data.type
-    }
-}
+	cardsUtils.checksThatTheCardIsNotExpired(card.expirationDate);
 
-export async function activateCard(cardInfo: { cardId: number, cvc: string, password: string }) {
-    const { cardId, cvc, password } = cardInfo;
+	if (card.password) throw errorHandlingUtils.activated("card");
 
-    const card: cardsRepository.Card = await checkIfTheCardExists(cardId);
+	cardsUtils.validateCVC(cvc, card.securityCode);
 
-    checksThatTheCardIsNotExpired(card);
+	cardsUtils.checkPasswordFormat(password);
 
-    if(card.password) throw errorHandlingUtils.activated("card"); 
-
-    validateCVC(cvc, card.securityCode);
-   
-    checkPasswordFormat(password);
-
-    const saltRounds: number = 10;
-    const cryptedPassword: string = bcrypt.hashSync(password, saltRounds);
-
-    const cardUpdated: cardsRepository.CardUpdateData = {
-        password: cryptedPassword
-        // originalCardId: cardId,
-        // isBlocked: false
-    };
-    
-    await cardsRepository.update(cardId, cardUpdated);
+	await cardsRepository.update(cardId, { password: cardsUtils.encryptPassword(password) });
 }
 
 export async function viewCardBalanceAndTransactions(cardId: number | undefined) {

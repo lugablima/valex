@@ -10,10 +10,8 @@ export async function create(req: Request, res: Response) {
     res.status(201).send(card);
 }
 
-export async function activateCard(req: Request, res: Response) {
-    const cardInfos: { cardId: number, cvc: string, password: string } = req.body;
-
-    await cardsService.activateCard(cardInfos);
+export async function activate(req: Request, res: Response) {
+	await cardsService.activate(req.body);
         
     res.status(200).send("Card activated successfully!");
 }

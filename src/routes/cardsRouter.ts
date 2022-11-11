@@ -6,7 +6,7 @@ import * as cardsController from "../controllers/cardsController";
 const cardsRouter = Router();
 
 cardsRouter.post("/cards", validateSchema(cardsSchema.create), cardsController.create);
-cardsRouter.put("/cards", validateSchema(cardsSchema.cardActivation), cardsController.activateCard);
+cardsRouter.patch("/cards/activate", validateSchema(cardsSchema.activate), cardsController.activate);
 cardsRouter.get("/balance/:cardId", cardsController.viewCardBalanceAndTransactions);
 cardsRouter.put("/block-card", validateSchema(cardsSchema.cardLock), cardsController.blockCard);
 cardsRouter.put("/unlock-card", validateSchema(cardsSchema.cardLock), cardsController.unlockCard);
