@@ -9,6 +9,8 @@ import * as cardsRepository from "../repositories/cardsRepository";
 import * as cardsUtils from "../utils/cardsUtils";
 import * as rechargesRepository from "../repositories/rechargesRepository";
 import * as paymentsRepository from "../repositories/paymentsRepository";
+import * as cardsTypes from "../types/cardsTypes";
+import { Card, TransactionType } from "@prisma/client";
 
 export async function calculateBalance(cardId: number) {
     const transactions: paymentsRepository.PaymentWithBusinessName[] = await paymentsRepository.findByCardId(cardId); 
@@ -24,12 +26,12 @@ export async function calculateBalance(cardId: number) {
     return { balance, transactions, recharges };
 }
 
-export async function checkIfTheApiKeyIsValid(apiKey: string | undefined) {
-    if(!apiKey) throw errorHandlingUtils.notSend("API key");
+export async function validateApiKeyOrFail(apiKey: string | undefined) {
+	if (!apiKey) throw errorHandlingUtils.notSend("API key");
     
-    const company: companyRepository.Company | undefined = await companyRepository.findByApiKey(apiKey); 
+	const company = await companyRepository.findByApiKey(apiKey);
 
-    if(!company) throw errorHandlingUtils.invalid("API key");
+	if (!company) throw errorHandlingUtils.invalid("API key");
 }
 
 export async function checkIfTheCardExists(cardId: number) {
@@ -40,67 +42,35 @@ export async function checkIfTheCardExists(cardId: number) {
     return card;
 }
 
-export function checksThatTheCardIsNotExpired(card: cardsRepository.Card) {
-    if(dayjs(dayjs().format("MM/YY")).isAfter(card.expirationDate)) {
-        throw errorHandlingUtils.expired("card"); 
-    }
-}
+async function validateEmployeeIdOrFail(employeeId: number) {
+	const employee = await employeeRepository.findById(employeeId);
  
-function checkPasswordFormat(password: string) {
-    const passwordRegex: RegExp = /^[0-9]{4}$/;
+	if (!employee) throw errorHandlingUtils.notFound("Employee");
 
-    if(!passwordRegex.test(password)) {
-        throw errorHandlingUtils.invalid("password format"); 
-    }
+	return employee;
 }
 
-export function validatePassword(password: string, encryptedPassword: string | undefined) {
-    checkPasswordFormat(password);
+async function validateConflictCard(type: TransactionType, employeeId: number) {
+	const employeeCard = await cardsRepository.findByTypeAndEmployeeId(type, employeeId);
 
-    if(!encryptedPassword) {
-        throw errorHandlingUtils.notActivated("Card"); 
+	if (employeeCard) throw errorHandlingUtils.typeConflict("Card");
     }
 
-    if(!bcrypt.compareSync(password, encryptedPassword)) {
-        throw errorHandlingUtils.invalid("password"); 
-    }
-}
+export async function create(
+	{ employeeId, type }: cardsTypes.CreateCardSchema,
+	apiKey: string | undefined
+): Promise<Card> {
+	await validateApiKeyOrFail(apiKey);
 
-export function validateCVC(cvc: string, encryptCvc: string) {
-    const decryptedCvc: string = cardsUtils.decryptCvc(encryptCvc);
+	const employee = await validateEmployeeIdOrFail(employeeId);
 
-    if(cvc !== decryptedCvc) throw errorHandlingUtils.invalid("CVC");  
-}
+	await validateConflictCard(type, employeeId);
 
-export async function createCard(data: { employeeId: number, type: cardsRepository.TransactionTypes }, apiKey: string | undefined) {
-    await checkIfTheApiKeyIsValid(apiKey);
+	const cardData = cardsUtils.generateCardInfos(employee.fullName, employeeId, type);
 
-    const employee: employeeRepository.Employee | undefined = await employeeRepository.findById(data.employeeId); 
+	const createdCard = await cardsRepository.insert(cardData);
 
-    if(!employee) throw errorHandlingUtils.notFound("Employee"); 
-
-    const employeeCards: cardsRepository.Card | undefined = await cardsRepository.findByTypeAndEmployeeId(data.type, data.employeeId);
-
-    if(employeeCards) throw errorHandlingUtils.typeConflict("Card"); 
-
-    const cardNumber: string = faker.finance.account(16);
-    const nameOnCard: string = cardsUtils.generateNameOnCard(employee.fullName);
-    const expirationDate: string = dayjs().add(5, "year").format("MM/YY");
-    const cvc: string = faker.finance.creditCardCVV();
-    
-    const encryptedCvc: string = cardsUtils.encryptCvc(cvc);
-    
-    const card: cardsRepository.CardInsertData = {
-        number: cardNumber,
-        employeeId: data.employeeId,
-        cardholderName: nameOnCard,
-        securityCode: encryptedCvc,
-        expirationDate,
-        password: undefined,
-        isVirtual: false,
-        originalCardId: undefined,
-        isBlocked: false,
-        type: data.type
+	return { ...createdCard, securityCode: cardsUtils.decryptCvc(createdCard.securityCode) };
     }
 
     const { id } = await cardsRepository.insert(card);

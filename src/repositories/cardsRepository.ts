@@ -1,12 +1,8 @@
 import { prisma } from "../config/prisma";
+import * as cardsTypes from "../types/cardsTypes";
 // import { mapObjectToUpdateQuery } from "../utils/sqlUtils";
 
-export type TransactionTypes =
-	| "groceries"
-	| "restaurant"
-	| "transport"
-	| "education"
-	| "health";
+export type TransactionTypes = "groceries" | "restaurant" | "transport" | "education" | "health";
 
 export interface Card {
 	id: number;
@@ -26,76 +22,34 @@ export type CardInsertData = Omit<Card, "id">;
 export type CardUpdateData = Partial<Card>;
 
 export async function find() {
-	const result = await prisma.card.findMany({ orderBy: { id: "asc" } });
-	return result;
+	return prisma.card.findMany({ orderBy: { id: "asc" } });
 }
 
 export async function findById(id: number) {
-	const result = await prisma.card.findUnique({ where: { id } });
-
-	return result;
+	return prisma.card.findUnique({ where: { id } });
 }
 
-export async function findByTypeAndEmployeeId(
-	type: TransactionTypes,
-	employeeId: number
-) {
-	const result = await prisma.card.findFirst({
+export async function findByTypeAndEmployeeId(type: TransactionTypes, employeeId: number) {
+	return prisma.card.findFirst({
 		where: {
 			AND: [{ type }, { employeeId }],
 		},
 	});
-
-	return result;
 }
 
-export async function findByCardDetails(
-	number: string,
-	cardholderName: string,
-	expirationDate: string
-) {
-	const result = await prisma.card.findFirst({
+export async function findByCardDetails(number: string, cardholderName: string, expirationDate: string) {
+	return prisma.card.findFirst({
 		where: {
 			AND: [{ number }, { cardholderName }, { expirationDate }],
 		},
 	});
-
-	return result;
 }
 
-export async function insert(cardData: CardInsertData) {
-	const {
-		employeeId,
-		number,
-		cardholderName,
-		securityCode,
-		expirationDate,
-		password,
-		isVirtual,
-		originalCardId,
-		isBlocked,
-		type,
-	} = cardData;
-
-	const result = await prisma.card.create({
-		data: {
-			employeeId,
-			number,
-			cardholderName,
-			securityCode,
-			expirationDate,
-			password,
-			isVirtual,
-			originalCardId,
-			isBlocked,
-			type,
-		},
-	});
-
-	return result;
+export async function insert(cardData: cardsTypes.CreateCardData) {
+	return prisma.card.create({ data: cardData });
 }
 
-export async function update(id: number, cardData: CardUpdateData) {
+export async function update(id: number, cardData: cardsTypes.UpdateCardData) {
 	await prisma.card.update({
 		where: { id },
 		data: cardData,
