@@ -7,32 +7,25 @@ export default function errorHandlerMiddleware(
 	res: Response,
 	_next: NextFunction
 ) {
-	if (error.name === "NotSent") {
-		return res.status(400).send(error.message);
+	if (error.name === "UnsentEntityError") {
+		return res.status(400).send({ message: error.message });
 	}
 
 	if (
-		error.name === "Invalid" ||
-		error.name === "Expired" ||
-		error.name === "NotActivated" ||
-		error.name === "Insufficient" ||
-		error.name === "DifferentTypes"
+		error.name === "InvalidCredentialsError" ||
+		error.name === "UnauthorizedError" ||
+		error.name === "DifferentTypesError"
 	) {
-		return res.status(401).send(error.message);
+		return res.status(401).send({ message: error.message });
 	}
 
-	if (error.name === "NotFound") {
-		return res.status(404).send(error.message);
+	if (error.name === "NotFoundError") {
+		return res.status(404).send({ message: error.message });
 	}
 
-	if (
-		error.name === "TypeConflict" ||
-		error.name === "Activated" ||
-		error.name === "Blocked" ||
-		error.name === "Unlocked"
-	) {
-		return res.status(409).send(error.message);
+	if (error.name === "ConflictError") {
+		return res.status(409).send({ message: error.message });
 	}
 
-	return res.sendStatus(500);
+	return res.status(500).send({ message: "Internal Server Error" });
 }
