@@ -3,7 +3,7 @@ import { faker } from "@faker-js/faker";
 import dayjs from "dayjs";
 import bcrypt from "bcrypt";
 import { TransactionType, Card } from "@prisma/client";
-import * as errorHandlingUtils from "./errorHandlingUtils";
+import { unauthorizedError, invalidCredentialsError } from "./errorHandlingUtils";
 import { CreateCardData } from "types/cardsTypes";
 
 export function generateCardName(fullName: string): string {
@@ -67,7 +67,7 @@ export function calculateTotalAmount(array: any[]): number {
 
 export function checksThatTheCardIsNotExpired(expirationDate: string) {
 	if (dayjs(dayjs().format("MM/YY")).isAfter(expirationDate)) {
-		throw errorHandlingUtils.expired("card");
+		throw unauthorizedError("The card is expired!");
 	}
 }
 
@@ -75,7 +75,7 @@ export function checkPasswordFormat(password: string) {
 	const passwordRegex: RegExp = /^[0-9]{4}$/;
 
 	if (!passwordRegex.test(password)) {
-		throw errorHandlingUtils.invalid("password format");
+		throw invalidCredentialsError("password format");
 	}
 }
 
@@ -83,11 +83,11 @@ export function validatePassword(password: string, encryptedPassword: string | n
 	checkPasswordFormat(password);
 
 	if (!encryptedPassword) {
-		throw errorHandlingUtils.notActivated("Card");
+		throw unauthorizedError("Inactive card!");
 	}
 
 	if (!bcrypt.compareSync(password, encryptedPassword)) {
-		throw errorHandlingUtils.invalid("password");
+		throw invalidCredentialsError("password");
 	}
 }
 
@@ -99,17 +99,17 @@ export function encryptPassword(password: string) {
 export function validateCVC(cvc: string, encryptedCvc: string) {
 	const decryptedCvc: string = decryptCvc(encryptedCvc);
 
-	if (cvc !== decryptedCvc) throw errorHandlingUtils.invalid("CVC");
+	if (cvc !== decryptedCvc) throw invalidCredentialsError("CVC");
 }
 
 export function checkIfTheCardIsActivated(card: Card) {
 	if (!card.password) {
-		throw errorHandlingUtils.notActivated("Card");
+		throw unauthorizedError("The card is inactive!");
 	}
 }
 
 export function checkIfTheCardIsBlocked(card: Card) {
 	if (card.isBlocked) {
-		throw errorHandlingUtils.blocked("card");
+		throw unauthorizedError("The card is blocked!");
 	}
 }
