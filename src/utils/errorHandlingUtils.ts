@@ -1,3 +1,7 @@
+export type ApplicationError = {
+	name: string;
+	message: string;
+};
 export function notSend(entity: string) {
     return { code: "NotSent", message: `${entity} not sent!` };
 }
