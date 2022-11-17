@@ -1,6 +1,6 @@
 import "../setup";
 import { faker } from "@faker-js/faker";
-import * as errorHandlingUtils from "../utils/errorHandlingUtils";
+import { unsentEntityError, invalidCredentialsError, notFoundError, conflictError } from "../utils/errorHandlingUtils";
 import * as companyRepository from "../repositories/companyRepository";
 import * as employeeRepository from "../repositories/employeeRepository";
 import * as cardsRepository from "../repositories/cardsRepository";
@@ -25,17 +25,17 @@ export async function calculateBalance(cardId: number): Promise<cardsTypes.Balan
 }
 
 export async function validateApiKeyOrFail(apiKey: string | undefined) {
-	if (!apiKey) throw errorHandlingUtils.notSend("API key");
+	if (!apiKey) throw unsentEntityError("API key");
 
 	const company = await companyRepository.findByApiKey(apiKey);
 
-	if (!company) throw errorHandlingUtils.invalid("API key");
+	if (!company) throw invalidCredentialsError("API key");
 }
 
 export async function validateCardIdOrFail(cardId: number) {
 	const card = await cardsRepository.findById(cardId);
 
-	if (!card) throw errorHandlingUtils.notFound("Card");
+	if (!card) throw notFoundError("Card");
 
 	return card;
 }
@@ -43,7 +43,7 @@ export async function validateCardIdOrFail(cardId: number) {
 async function validateEmployeeIdOrFail(employeeId: number) {
 	const employee = await employeeRepository.findById(employeeId);
 
-	if (!employee) throw errorHandlingUtils.notFound("Employee");
+	if (!employee) throw notFoundError("Employee");
 
 	return employee;
 }
@@ -51,7 +51,7 @@ async function validateEmployeeIdOrFail(employeeId: number) {
 async function validateConflictCard(type: TransactionType, employeeId: number) {
 	const employeeCard = await cardsRepository.findByTypeAndEmployeeId(type, employeeId);
 
-	if (employeeCard) throw errorHandlingUtils.typeConflict("Card");
+	if (employeeCard) throw conflictError("This type of card already exists associated with this employee!");
 }
 
 export async function create(
@@ -76,7 +76,7 @@ export async function activate({ cardId, cvc, password }: cardsTypes.ActivateCar
 
 	cardsUtils.checksThatTheCardIsNotExpired(card.expirationDate);
 
-	if (card.password) throw errorHandlingUtils.activated("card");
+	if (card.password) throw conflictError("This card is already activated!");
 
 	cardsUtils.validateCVC(cvc, card.securityCode);
 
@@ -86,7 +86,7 @@ export async function activate({ cardId, cvc, password }: cardsTypes.ActivateCar
 }
 
 export async function viewBalanceAndTransactions(cardId: number | undefined) {
-	if (!cardId) throw errorHandlingUtils.notSend("Card id");
+	if (!cardId) throw unsentEntityError("Card id");
 
 	await validateCardIdOrFail(cardId);
 
@@ -100,7 +100,7 @@ export async function block({ cardId, password }: cardsTypes.BlockOrUnlockCardSc
 
 	cardsUtils.checksThatTheCardIsNotExpired(card.expirationDate);
 
-	if (card.isBlocked) throw errorHandlingUtils.blocked("card");
+	if (card.isBlocked) throw conflictError("This card is already blocked!");
 
 	cardsUtils.validatePassword(password, card.password);
 
@@ -112,7 +112,7 @@ export async function unlock({ cardId, password }: cardsTypes.BlockOrUnlockCardS
 
 	cardsUtils.checksThatTheCardIsNotExpired(card.expirationDate);
 
-	if (!card.isBlocked) throw errorHandlingUtils.unlocked("Card");
+	if (!card.isBlocked) throw conflictError("This card is already unlocked!");
 
 	cardsUtils.validatePassword(password, card.password);
 
