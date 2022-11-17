@@ -2,7 +2,7 @@ import * as cardsService from "./cardsService";
 import * as cardsRepository from "../repositories/cardsRepository";
 import * as businessRepository from "../repositories/businessRepository";
 import * as paymentsRepository from "../repositories/paymentsRepository";
-import * as errorHandlingUtils from "../utils/errorHandlingUtils";
+import { notFoundError, unauthorizedError } from "../utils/errorHandlingUtils";
 import * as cardsUtils from "../utils/cardsUtils";
 import * as paymentsTypes from "types/paymentsTypes";
 import { Card } from "@prisma/client";
@@ -11,11 +11,11 @@ async function checkIfItIsAValidBusiness(businessId: number, card: Card) {
 	const business = await businessRepository.findById(businessId);
 
 	if (!business) {
-		throw errorHandlingUtils.notFound("Business");
+		throw notFoundError("Business");
 	}
 
 	if (business.type !== card.type) {
-		throw errorHandlingUtils.differentTypes("Card and business");
+		throw unauthorizedError("Card and business are of different types!");
 	}
 }
 
@@ -23,7 +23,7 @@ async function checkIfTheCardHasEnoughBalance(cardId: number, amount: number) {
 	const { balance } = await cardsService.calculateBalance(cardId);
 
 	if (amount > balance) {
-		throw errorHandlingUtils.insufficient("balance");
+		throw unauthorizedError("Insufficient balance!");
 	}
 }
 
@@ -31,7 +31,7 @@ async function checkCardDetails(number: string, cardholderName: string, expirati
 	const card = await cardsRepository.findByCardDetails(number, cardholderName, expirationDate);
 
 	if (!card) {
-		throw errorHandlingUtils.notFound("Card");
+		throw notFoundError("Card");
 	}
 
 	return card;
