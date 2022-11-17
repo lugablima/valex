@@ -11,8 +11,8 @@ export function notFoundError(message: string): ApplicationError {
 	return { name: "NotFoundError", message: `${message} not found!` };
 }
 
-export function invalidCredentialsError(): ApplicationError {
-	return { name: "InvalidCredentialsError", message: `Invalid credentials!` };
+export function invalidCredentialsError(message?: string): ApplicationError {
+	return { name: "InvalidCredentialsError", message: message ? `Invalid ${message}!` : `Invalid credentials!` };
 }
 
 // export function expired(entity: string) {
