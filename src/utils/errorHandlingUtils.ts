@@ -3,16 +3,16 @@ export type ApplicationError = {
 	message: string;
 };
 
-export function unsentEntityError(entity: string) {
-	return { name: "UnsentEntityError", message: `${entity} not sent!` };
+export function unsentEntityError(message: string): ApplicationError {
+	return { name: "UnsentEntityError", message: `${message} not sent!` };
 }
 
-export function notFoundError(entity: string) {
-	return { name: "NotFoundError", message: `${entity} not found!` };
+export function notFoundError(message: string): ApplicationError {
+	return { name: "NotFoundError", message: `${message} not found!` };
 }
 
-export function invalidCredentialsError(entity: string) {
-	return { name: "InvalidCredentialsError", message: `Invalid ${entity}!` };
+export function invalidCredentialsError(): ApplicationError {
+	return { name: "InvalidCredentialsError", message: `Invalid credentials!` };
 }
 
 // export function expired(entity: string) {
@@ -39,16 +39,16 @@ export function invalidCredentialsError(entity: string) {
 // 	return { name: "Insufficient", message: `Insufficient ${entity}!` };
 // }
 
-export function conflictError(entity: string) {
-	return { name: "ConflictError", message: `${entity} has a type conflict!` };
+export function conflictError(message: string): ApplicationError {
+	return { name: "ConflictError", message };
 }
 
-export function differentTypesError(entities: string) {
-	return { name: "DifferentTypesError", message: `${entities} are of different types!` };
-}
+// export function differentTypesError(entities: string): ApplicationError {
+// 	return { name: "DifferentTypesError", message: `${entities} are of different types!` };
+// }
 
-export function unauthorizedError(entities: string) {
-	return { name: "UnauthorizedError", message: `${entities} are of different types!` };
+export function unauthorizedError(message: string): ApplicationError {
+	return { name: "UnauthorizedError", message };
 }
 
 // export function notRegistered(entity: string) {

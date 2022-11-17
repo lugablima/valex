@@ -11,11 +11,7 @@ export default function errorHandlerMiddleware(
 		return res.status(400).send({ message: error.message });
 	}
 
-	if (
-		error.name === "InvalidCredentialsError" ||
-		error.name === "UnauthorizedError" ||
-		error.name === "DifferentTypesError"
-	) {
+	if (error.name === "InvalidCredentialsError" || error.name === "UnauthorizedError") {
 		return res.status(401).send({ message: error.message });
 	}
 
