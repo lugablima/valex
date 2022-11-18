@@ -1,33 +1,27 @@
 import { Request, Response, NextFunction } from "express";
+import { ApplicationError } from "utils/errorHandlingUtils";
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export default function errorHandlerMiddleware(error: any, req: Request, res: Response, _next: NextFunction) {
-	if (error.code === "NotSent") {
-		return res.status(400).send(error.message);
+export default function errorHandlerMiddleware(
+	error: ApplicationError | Error,
+	req: Request,
+	res: Response,
+	_next: NextFunction
+) {
+	if (error.name === "UnsentEntityError") {
+		return res.status(400).send({ message: error.message });
 	}
 
-	if (
-		error.code === "Invalid" ||
-		error.code === "Expired" ||
-		error.code === "NotActivated" ||
-		error.code === "Insufficient" ||
-		error.code === "DifferentTypes"
-	) {
-		return res.status(401).send(error.message);
+	if (error.name === "InvalidCredentialsError" || error.name === "UnauthorizedError") {
+		return res.status(401).send({ message: error.message });
 	}
 
-	if (error.code === "NotFound") {
-		return res.status(404).send(error.message);
+	if (error.name === "NotFoundError") {
+		return res.status(404).send({ message: error.message });
 	}
 
-	if (
-		error.code === "TypeConflict" ||
-		error.code === "Activated" ||
-		error.code === "Blocked" ||
-		error.code === "Unlocked"
-	) {
-		return res.status(409).send(error.message);
+	if (error.name === "ConflictError") {
+		return res.status(409).send({ message: error.message });
 	}
 
-	return res.sendStatus(500);
+	return res.status(500).send({ message: "Internal Server Error" });
 }
