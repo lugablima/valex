@@ -1,0 +1,28 @@
+services: 
+  db_valex:
+    image: postgres
+    container_name: db_valex
+    restart: always
+    ports: 
+      - 5430:5432
+    env_file:
+      - .env
+    volumes:
+      - postgres:/var/lib/postgresql/data
+  
+  node_app_valex:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: node_app_valex
+    ports: 
+      - 5000:5000
+    depends_on:
+      - db_valex
+    env_file:
+      - .env
+    working_dir: /usr/src/valex
+    command: bash -c "npm run migration:run && npx prisma db seed && npm run start"
+  
+volumes:
+  postgres:
