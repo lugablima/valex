@@ -1,0 +1,38 @@
+services: 
+  db_valex_dev:
+    image: postgres
+    container_name: db_valex_dev
+    restart: always
+    ports: 
+      - 5430:5432
+    env_file:
+      - .env.dev
+    volumes:
+      - postgres_dev:/var/lib/postgresql/data
+  
+  node_app_valex_dev:
+    build: 
+      context: . 
+      dockerfile: Dockerfile.development
+    container_name: node_app_valex_dev
+    ports: 
+      - 5000:5000
+    depends_on:
+      - db_valex_dev
+    env_file:
+      - .env.dev
+    working_dir: /usr/src/valex
+    command: bash -c "npx prisma migrate dev && npx prisma db seed && npm run dev"
+    volumes:
+      - ./src:/usr/src/valex/src
+      - ./prisma:/usr/src/valex/prisma
+      - ./.env.dev:/usr/src/valex/.env.dev
+      - ./.eslintrc.json:/usr/src/valex/.eslintrc.json
+      - ./.prettierrc:/usr/src/valex/.prettierrc
+      - ./tsconfig.eslint.json:/usr/src/valex/tsconfig.eslint.json
+      - ./tsconfig.json:/usr/src/valex/tsconfig.json
+      - ./package.json:/usr/src/valex/package.json
+      - ./package-lock.json:/usr/src/valex/package-lock.json
+  
+volumes:
+  postgres_dev:
