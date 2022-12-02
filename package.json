@@ -5,10 +5,10 @@
   "main": "index.js",
   "scripts": {
     "build": "npx tsc",
-    "start": "NODE_ENV=production node dist/index.js",
+    "start": "NODE_ENV=production node dist/server.js",
     "migration:run": "prisma migrate deploy",
     "migration:generate": "prisma migrate dev",
-    "dev": "NODE_ENV=dev nodemon src/index.ts",
+    "dev": "NODE_ENV=dev nodemon src/server.ts",
     "test": "dotenv -e .env.test npm run migration:generate && dotenv -e .env.test -- jest --runInBand --coverage"
   },
   "keywords": [],
