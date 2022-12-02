@@ -4,8 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "NODE_ENV=production ts-node ./src/index.ts",
-    "dev": "NODE_ENV=dev nodemon ./src/index.ts"
+    "build": "npx tsc",
+    "start": "NODE_ENV=production node dist/index.js",
+    "migration:run": "prisma migrate deploy",
+    "migration:generate": "prisma migrate dev",
+    "dev": "NODE_ENV=dev nodemon src/index.ts"
   },
   "keywords": [],
   "author": "",
