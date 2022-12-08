@@ -13,7 +13,7 @@ services:
   node_app_valex:
     build: 
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.production
     container_name: node_app_valex
     ports: 
       - 5000:5000
