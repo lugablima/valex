@@ -5,9 +5,10 @@
   "main": "index.js",
   "scripts": {
     "build": "npx tsc",
-    "start": "NODE_ENV=production node dist/index.js",
+    "start": "NODE_ENV=production npm run migration:run && npm run prisma:seed && node dist/index.js",
     "migration:run": "prisma migrate deploy",
     "migration:generate": "prisma migrate dev",
+    "prisma:seed": "prisma db seed",
     "dev": "NODE_ENV=dev nodemon src/index.ts"
   },
   "keywords": [],
