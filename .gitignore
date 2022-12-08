@@ -1,5 +1,6 @@
 node_modules/
 database/
+coverage/
 .env*
 !.env.example
 .wakatime-project
