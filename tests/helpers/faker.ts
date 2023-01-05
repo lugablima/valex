@@ -1,4 +1,5 @@
 import { faker } from "@faker-js/faker";
+import dayjs from "dayjs";
 import { TransactionType } from "@prisma/client";
 
 interface RandomNumberOptions {
@@ -28,8 +29,7 @@ export function generateSecurityCode() {
 }
 
 export function generateExpirationDate() {
-	return faker.date.future(5).toString();
-	// Lembrar de aplicar o dayjs
+	return dayjs().add(5, "year").format("MM/YY");
 }
 
 export function generateRandomBoolean() {
