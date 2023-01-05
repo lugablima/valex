@@ -1,6 +1,7 @@
 import { faker } from "@faker-js/faker";
 import dayjs from "dayjs";
 import { TransactionType } from "@prisma/client";
+import { encryptCvc } from "../../src/utils/cardsUtils";
 
 interface RandomNumberOptions {
 	min?: number;
@@ -25,7 +26,7 @@ export function generateCardholderName() {
 }
 
 export function generateSecurityCode() {
-	return faker.finance.creditCardCVV();
+	return encryptCvc(faker.finance.creditCardCVV());
 }
 
 export function generateExpirationDate() {
