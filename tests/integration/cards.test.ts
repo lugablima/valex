@@ -45,12 +45,12 @@ describe("POST /cards", () => {
 			.set("x-api-key", company.apiKey as string)
 			.send(cardPayload);
 
-		const cardCreated = await prisma.card.findFirst({
+		const cardNotCreated = await prisma.card.findFirst({
 			where: { AND: [{ employeeId: cardPayload.employeeId }, { type: cardPayload.type }] },
 		});
 
 		expect(result.status).toBe(422);
-		expect(cardCreated).toBeNull();
+		expect(cardNotCreated).toBeNull();
 	});
 
 	it("Should answer with status 400 when not sending header api key", async () => {
@@ -58,12 +58,12 @@ describe("POST /cards", () => {
 
 		const result = await server.post("/cards").send(cardPayload);
 
-		const cardCreated = await prisma.card.findFirst({
+		const cardNotCreated = await prisma.card.findFirst({
 			where: { AND: [{ employeeId: cardPayload.employeeId }, { type: cardPayload.type }] },
 		});
 
 		expect(result.status).toBe(400);
-		expect(cardCreated).toBeNull();
+		expect(cardNotCreated).toBeNull();
 	});
 
 	it("Should answer with status 401 when sending a invalid header api key", async () => {
@@ -71,12 +71,12 @@ describe("POST /cards", () => {
 
 		const result = await server.post("/cards").set("x-api-key", faker.datatype.string()).send(cardPayload);
 
-		const cardCreated = await prisma.card.findFirst({
+		const cardNotCreated = await prisma.card.findFirst({
 			where: { AND: [{ employeeId: cardPayload.employeeId }, { type: cardPayload.type }] },
 		});
 
 		expect(result.status).toBe(401);
-		expect(cardCreated).toBeNull();
+		expect(cardNotCreated).toBeNull();
 	});
 
 	it("Should answer with status 404 when sending a invalid employee id", async () => {
@@ -88,12 +88,12 @@ describe("POST /cards", () => {
 			.set("x-api-key", company.apiKey as string)
 			.send(cardPayload);
 
-		const cardCreated = await prisma.card.findFirst({
+		const cardNotCreated = await prisma.card.findFirst({
 			where: { AND: [{ employeeId: cardPayload.employeeId }, { type: cardPayload.type }] },
 		});
 
 		expect(result.status).toBe(404);
-		expect(cardCreated).toBeNull();
+		expect(cardNotCreated).toBeNull();
 	});
 
 	it("Should answer with status 409 when sending a payload of an already existing card", async () => {
@@ -109,11 +109,12 @@ describe("POST /cards", () => {
 			.set("x-api-key", company.apiKey as string)
 			.send(cardPayload);
 
-		const cardDatabase = await prisma.card.findMany({
+		const cardsInTheDatabase = await prisma.card.findMany({
 			where: { AND: [{ employeeId: cardPayload.employeeId }, { type: cardPayload.type }] },
 		});
 
 		expect(result.status).toBe(409);
-		expect(cardDatabase).toHaveLength(1);
+		expect(cardsInTheDatabase).toHaveLength(1);
+		expect(cardsInTheDatabase).toEqual(expect.arrayContaining([expect.objectContaining({ ...cardCreated })]));
 	});
 });
