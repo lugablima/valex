@@ -36,3 +36,7 @@ export function generateExpirationDate() {
 export function generateRandomBoolean() {
 	return faker.datatype.boolean();
 }
+
+export function generateRandomPassword(numberOfDigits?: number) {
+	return faker.finance.pin(numberOfDigits);
+}
