@@ -7,6 +7,7 @@ import * as cardPayloadFactory from "../factories/cardPayloadFactory";
 import cardFactory from "../factories/cardFactory";
 import * as fakerHelper from "../helpers/faker";
 import { decryptCvc, encryptPassword } from "../../src/utils/cardsUtils";
+import * as cardsTypes from "../../src/types/cardsTypes";
 import { prisma } from "../../src/config/prisma";
 
 beforeEach(async () => {
@@ -260,5 +261,40 @@ describe("PATCH /cards/activate", () => {
 		expect(cardCreated.password).toBeNull();
 		expect(notActivatedCard).not.toBeNull();
 		expect(notActivatedCard?.password).toBeNull();
+	});
+});
+
+describe("GET /cards/balance/:cardId", () => {
+	it("Should answer with status 200 when trying to view the balance of a valid card", async () => {
+		const { employee } = await createScenarioSeed();
+		const cardCreated = await cardFactory({ employeeId: employee.id });
+
+		const result = await server.get(`/cards/balance/${cardCreated.id}`);
+
+		expect(result.status).toBe(200);
+		expect(result.body).toEqual<cardsTypes.BalanceCard>({
+			balance: 0,
+			transactions: [],
+			recharges: [],
+		});
+	});
+
+	it("Should answer with status 400 when not sending card id", async () => {
+		const result = await server.get(`/cards/balance/${faker.lorem.word()}`);
+
+		expect(result.status).toBe(400);
+	});
+
+	it("Should answer with status 404 when trying to view a balance of a non-existing card", async () => {
+		const cardIdNonExisting = fakerHelper.generateRandomNumber({ min: 1 });
+
+		const result = await server.get(`/cards/balance/${cardIdNonExisting}`);
+
+		const cardNoNExisting = await prisma.card.findUnique({
+			where: { id: cardIdNonExisting },
+		});
+
+		expect(result.status).toBe(404);
+		expect(cardNoNExisting).toBeNull();
 	});
 });
