@@ -1,45 +1,36 @@
-# projeto18-valex
-Project with TypeScript of a benefit card API, developed during the Driven Education bootcamp.
+<h1 align="center">Valex</h1>
 
-<h1 align="center">
-  Valex
-</h1>
+## Tecnologias
+
 <div align="center">
-
-  <h3>Built With</h3>
-
-  <img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" height="30px"/>
-  <img src="https://img.shields.io/badge/Node.js-43853D?style=for-the-badge&logo=node.js&logoColor=white" height="30px"/>  
-  <img src="https://img.shields.io/badge/Express.js-404D59?style=for-the-badge&logo=express.js&logoColor=white" height="30px"/>
-  <img src="https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white" height="30px"/>
+  <img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" height="30px" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Node.js-43853D?style=for-the-badge&logo=node.js&logoColor=white" height="30px" alt="Node.js" />  
+  <img src="https://img.shields.io/badge/Express.js-404D59?style=for-the-badge&logo=express.js&logoColor=white" height="30px" alt="Express.js" />
+  <img alt="Prisma" src="https://img.shields.io/badge/Prisma-2D3748?style=for-the-badge&logo=prisma&logoColor=white" height="30px" />
+  <img src="https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white" height="30px" alt="PostgreSQL" />
+  <img alt="Docker" src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" height="30px" />
   <!-- Badges source: https://dev.to/envoy_/150-badges-for-github-pnk -->
 </div>
 
-<br/>
+## Descrição
 
-## Description
-
-Valex simulates an API that manages a benefit card.
-
-</br>
+O Valex é um sistema de cartões de benefícios, possibilitando a criação, ativação, bloqueio, desbloqueio e visualização de saldo de cartões físico e virtual. Além disso, é possível recarregar o cartão e realizar compras online ou em "points of sale" (POS).
 
 ## Features
 
--   Create card;
--   Activate a card;
--   Block a card;
--   Unlock a card;
--   Get the card balance and transactions;
--   Recharge a card;
--   Make a purchase at a point of sale (POS) with the card;
--   Make an online purchase with a card;
--   Create an online card.
+-   Criar cartão;
+-   Ativar cartão;
+-   Bloquear cartão;
+-   Desbloquear cartão;
+-   Visualizar o saldo e as transações do cartão;
+-   Recarregar cartão;
+-   Realizar compra em um "point of sale" (POS);
+-   Realizar compra online;
+-   Criar cartão virtual.
 
-</br>
+## Rotas
 
-## API Reference
-
-### Create card
+### Criar cartão
 
 ```http
 POST /cards
@@ -47,117 +38,102 @@ POST /cards
 
 #### Request:
 
-####
+| Headers     | Tipo     | Descrição                                                         |
+| :---------- | :------- | :---------------------------------------------------------------- |
+| `x-api-key` | `string` | **Obrigatório**. API key da empresa que está cadastrando o cartão |
 
-| Headers     | Type     | Description           |
-| :---------- | :------- | :-------------------- |
-| `x-api-key` | `string` | **Required**. API key |
+| Body         | Tipo      | Descrição                                    |
+| :----------  | :-------- | :------------------------------------------- |
+| `employeeId` | `inteiro` | **Obrigatório**. Id do usuário               |
+| `type`       | `string`  | **Obrigatório**. Tipo do cartão de benefício |    
 
-####
-
-</br>
-
-| Body         | Type      | Description                        |
-| :----------  | :-------- | :--------------------------------- |
-| `employeeId` | `integer` | **Required**. User Id              |
-| `type`       | `string`  | **Required**. Type of card benefit |    
-
-`Valid types: [groceries, restaurant, transport, education, health]`
+`Types válidos: [groceries, restaurant, transport, education, health]`
 
 #### Response:
 
 ```json
 {
   "id": 1,
-	"number": "1111111111111111",
+  "number": "1111111111111111",
   "employeeId": 1,
-	"cardholderName": "NAME N NAME",
-	"securityCode": "111",
-	"expirationDate": "01/27",
-	"isVirtual": false,
-	"isBlocked": false,
-	"type": "card type"
+  "cardholderName": "NAME N NAME",
+  "securityCode": "111",
+  "expirationDate": "01/27",
+  "isVirtual": false,
+  "isBlocked": false,
+  "type": "card type"
 }
 ```
-`Number has no defined format`
 
-#
-
-### Activate a card
+### Ativar cartão
 
 ```http
-PUT /cards
+PATCH /cards/activate
 ```
 
 #### Request:
 
-| Body         | Type     | Description                              |
-| :------------| :------- | :--------------------------------------- |
-| `cardId`     | `integer`| **Required**. Card Id                    |
-| `cvc`        | `string` | **Required**. Card CVC                   |
-| `password`   | `string` | **Required**. Card password              |
+| Body         | Tipo     | Descrição                                           |
+| :------------| :------- | :-------------------------------------------------- |
+| `cardId`     | `inteiro`| **Obrigatório**. Id do cartão                       |
+| `cvc`        | `string` | **Obrigatório**. Código de segurança (CVC) do cartão|
+| `password`   | `string` | **Obrigatório**. Senha do cartão                    |
 
-`Password length: 4`
+`A senha deve ser composta por 4 digitos e somente números`
 
-`Password pattern: only numbers`
+`O código de segurança (CVC) deve ser composto por somente 3 números`
 
-`CVC max length: 3`
-
-#
-
-### Block a card
+### Bloquear cartão
 
 ```http
-PUT /block-card
+PATCH /cards/block
 ```
 
 #### Request:
 
-| Body             | Type     | Description                        |
-| :--------------- | :------- | :--------------------------------- |
-| `cardId`         | `integer`| **Required**. Card id              |
-| `password`       | `string` | **Required**. Card password        |
+| Body             | Tipo     | Descrição                        |
+| :--------------- | :------- | :--------------------------------|
+| `cardId`         | `inteiro`| **Obrigatório**. Id do cartão    |
+| `password`       | `string` | **Obrigatório**. Senha do cartão |
 
-#
-
-### Unlock a card
+### Desbloquear cartão
 
 ```http
-PUT /unlock-card
+PATCH /cards/unlock
 ```
 
 #### Request:
 
-| Body             | Type     | Description                        |
-| :--------------- | :------- | :--------------------------------- |
-| `cardId`         | `integer`| **Required**. Card id              |
-| `password`       | `string` | **Required**. Card password        |
+| Body             | Tipo     | Descrição                        |
+| :--------------- | :------- | :--------------------------------|
+| `cardId`         | `inteiro`| **Obrigatório**. Id do cartão    |
+| `password`       | `string` | **Obrigatório**. Senha do cartão |
 
-#
-
-### Get the card balance and transactions
+### Visualizar saldo e transações do cartão
 
 ```http
-GET /balance/${cardId}
+GET /cards/balance/:cardId
 ```
+
+`cardId é um parâmetro de rota que representa onde deve ser informado o id do cartão`
 
 #### Response:
 
 ```json
 {
   "balance": 1,
-	"transactions": [
-    { "id": 1, "cardId": 1, "businessId": 1, "businessName": "Name", "timestamp": "DD/MM/YYYY", "amount": 1 }
+  "transactions": [
+    { "id": 1, "cardId": 1, "businessId": 1, "businessName": "NomeDaEmpresa", "timestamp": "DD/MM/AAAA", "amount": 1 },
+    ...
   ],
   "recharges": [
-    { "id": 1, "cardId": 1, "timestamp": "DD/MM/YYYY", "amount": 1 }
+    { "id": 1, "cardId": 1, "timestamp": "DD/MM/AAAA", "amount": 1 },
+    ...
   ]
 }
 ```
 
-#
-
-### Recharge a card
+### Recarregar cartão
 
 ```http
 POST /recharges
@@ -165,111 +141,104 @@ POST /recharges
 
 #### Request:
 
-| Headers     | Type     | Description           |
-| :---------- | :------- | :-------------------- |
-| `x-api-key` | `string` | **Required**. API key |
+| Headers     | Tipo     | Descrição                                                         |
+| :---------- | :------- | :---------------------------------------------------------------- |
+| `x-api-key` | `string` | **Obrigatório**. API key da empresa que está cadastrando o cartão |
 
-####
+| Body             | Tipo      | Descrição                         |
+| :--------------- | :-------- | :-------------------------------- |
+| `cardId`         | `inteiro` | **Obrigatório**. Id do cartão     |
+| `amount`         | `inteiro` | **Obrigatório**. Valor da recarga |
 
-| Body             | Type      | Description                            |
-| :--------------- | :-------- | :------------------------------------- |
-| `cardId`         | `integer` | **Required**. Card Id                  |
-| `amount`         | `integer` | **Required**. Recharge amount in cents |
-
-#
-
-### Make a purchase at a point of sale (POS) with the card
+### Realizar compra em um "point of sale" (POS)
 
 ```http
 POST /payments
 ```
+
 #### Request:
 
-| Body             | Type      | Description                           |
-| :--------------- | :-------- | :------------------------------------ |
-| `cardId`         | `integer` | **Required**. Card id                 |
-| `password`       | `string`  | **Required**. Card password           |
-| `businessId`     | `integer` | **Required**. Business id             |
-| `amount`         | `integer` | **Required**. Payment amount in cents |
+| Body             | Tipo      | Descrição                                                         |
+| :--------------- | :-------- | :---------------------------------------------------------------- |
+| `cardId`         | `inteiro` | **Obrigatório**. Id do cartão                                     |
+| `password`       | `string`  | **Obrigatório**. Senha do cartão                                  |
+| `businessId`     | `inteiro` | **Obrigatório**. Id da empresa onde está sendo realizada a compra |
+| `amount`         | `inteiro` | **Obrigatório**. Valor da compra                                  |
 
-#
-
-### Make an online purchase with a card
+### Realizar compra online
 
 ```http
-POST /online-payments
+POST /payments/online
 ```
 
 #### Request:
 
-| Body             | Type      | Description                           |
-| :--------------- | :-------- | :------------------------------------ |
-| `number`         | `string`  | **Required**. Card number             |
-| `cardholderName` | `string`  | **Required**. Name in card            |
-| `expirationDate` | `string`  | **Required**. Card expiration date    |
-| `cvc`            | `string`  | **Required**. Card CVC                |
-| `businessId`     | `integer` | **Required**. Business id             |
-| `amount`         | `integer` | **Required**. Payment amount in cents |
+| Body             | Tipo      | Descrição                                                         |
+| :--------------- | :-------- | :---------------------------------------------------------------- |
+| `number`         | `string`  | **Obrigatório**. Número do cartão                                 |
+| `cardholderName` | `string`  | **Obrigatório**. Nome no cartão                                   |
+| `expirationDate` | `string`  | **Obrigatório**. Data de expiração do cartão                      |
+| `cvc`            | `string`  | **Obrigatório**. Código de segurança (CVC) do cartão              |
+| `businessId`     | `inteiro` | **Obrigatório**. Id da empresa onde está sendo realizada a compra |
+| `amount`         | `inteiro` | **Obrigatório**. Valor da compra                                  |
 
-`Expiration Date Format: "MM/YY"`
+`Formato da data de expiração: "MM/AA"`
 
-`CVC max length: 3`
+`O código de segurança (CVC) deve ser composto por somente 3 números`
 
-#
-
-### Create an online card
+### Criar cartão virtual
 
 ```http
-POST /virtual-card
+POST /cards/virtual
 ```
 
 #### Request:
 
-| Body                   | Type      | Description                           |
-| :--------------------- | :-------- | :------------------------------------ |
-| `originalCardId`       | `integer` | **Required**. Original card id        |
-| `originalCardPassword` | `string`  | **Required**. Original card password  |
+| Body                   | Tipo      | Descrição                                                             |
+| :--------------------- | :-------- | :-------------------------------------------------------------------- |
+| `originalCardId`       | `inteiro` | **Obrigatório**. Id do cartão físico ao qual o virtual será vinculado |
+| `originalCardPassword` | `string`  | **Obrigatório**. Senha do cartão físico                               |
 
-`Password length: 4`
+`A senha deve ser composta por 4 digitos e somente números`
 
-`Password pattern: only numbers`
+## Variáveis de ambiente
 
-#
+Para rodar este projeto, você precisará adicionar as seguintes variáveis de ambiente ao seu arquivo **.env**:
 
-## Environment Variables
+`PORT = número #recomendado:5000`
 
-To run this project, you will need to add the following environment variables to your .env file
+`DATABASE_URL = postgres://nomeDeUsuário:senha@nomeDoServidor:5432/nomeDoBancoDeDados`
 
-`PORT = number #recommended:5000`
+`CVC_SECRET_KEY = qualquer string`
 
-`DATABASE_URL = postgres://UserName:Password@Hostname:5432/DatabaseName`
+## Rodando a aplicação localmente
 
-`CVC_SECRET_KEY = any string`
-
-</br>
-
-## Run Locally
-
-Clone the project
+Clone o projeto
 
 ```bash
-  git clone https://github.com/lugablima/projeto18-valex
+  git clone https://github.com/lugablima/valex.git
 ```
 
-Go to the project directory
+Vá para a pasta onde está o projeto
 
 ```bash
-  cd projeto18-valex/
+  cd valex/
 ```
 
-Install dependencies
+Instale as dependências do projeto
 
 ```bash
   npm install
 ```
 
-Start the server
+Inicie o servidor
 
 ```bash
-  npm run start
+  npm run dev
 ```
+
+## Deploy da aplicação
+
+Se preferir, é possível testar a aplicação por meio de um REST API Client (Insomnia, Postman, Thunder Client, etc) e acessando o link de deploy da mesma:
+
+<a href="https://valex.up.railway.app" target="_blank">https://valex.up.railway.app</a>
